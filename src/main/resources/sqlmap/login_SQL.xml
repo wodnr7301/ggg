@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.EmployeeMapper">
+
+	<resultMap type="kr.or.oho.vo.EmployeeVO"  id="employeeMap">
+		<result property="empNo" column="EMP_NO"/>
+		<result property="deptNo" column="DEPT_NO"/>
+		<result property="empNm" column="EMP_NM"/>
+		<result property="empBrdt" column="EMP_BRDT"/>
+		<result property="empEmlAddr" column="EMP_EML_ADDR"/>
+		<result property="empZip" column="EMP_ZIP"/>
+		<result property="empAddr" column="EMP_ADDR"/>
+		<result property="empDaddr" column="EMP_DADDR"/>
+		<result property="empTelno" column="EMP_TELNO"/>
+		<result property="empMrgYn" column="EMP_MRG_YN"/>
+		<result property="empAmt" column="EMP_AMT"/>
+		<result property="empImg" column="EMP_IMG"/>
+		<result property="empId" column="EMP_ID"/>
+		<result property="empPswd" column="EMP_PSWD"/>
+		<result property="empGen" column="EMP_GEN"/>
+		<result property="empEmpymd" column="EMP_EMPYMD"/>
+		<result property="empWhdwlYmd" column="EMP_WHDWL_YMD"/>
+		<result property="empJncmpYmd" column="EMP_JNCMP_YMD"/>
+		<result property="empActno" column="EMP_ACTNO"/>
+		<result property="empRv" column="EMP_RV"/>
+		<result property="enabled" column="ENABLED"/>
+		<result property="empJbgdNm" column="EMP_JBGD_NM"/>
+		<result property="empJbttlNm" column="EMP_JBTTL_NM"/>
+		<result property="empClsf" column="EMP_CLSF"/>
+		<association property="deptVO" resultMap="deptMap"></association>
+		<collection property="empAuthVOList"  resultMap="employeeAuthMap"></collection>
+	</resultMap>
+	
+	<resultMap type="kr.or.oho.vo.EmployeeAuthrtVO" id="employeeAuthMap">
+		<result property="Auth" column="AUTHRT_AUTH"/>
+		<result property="empNo" column="EMP_NO"/>
+	</resultMap>
+	
+	<resultMap type="kr.or.oho.vo.DeptVO" id="deptMap">
+		<result property="deptNo" column="DEPT_NO"/>
+		<result property="deptNm" column="DEPT_NM"/>
+	</resultMap>
+	
+
+	<select id="detail" resultMap="employeeMap" parameterType="String">
+		SELECT 
+		A.EMP_NO
+		, A.EMP_NM
+		, A.EMP_ID
+		, A.EMP_PSWD
+		, A.EMP_JBGD_NM
+		, A.EMP_JBTTL_NM
+		, A.EMP_CLSF
+		, A.DEPT_NO
+		, B.AUTHRT_AUTH
+		FROM EMPLOYEE A, AUTHRT B
+		WHERE A.EMP_NO = B.EMP_NO
+		AND A.EMP_ID = #{username}
+	</select>
+	
+	<select id="getDetpNo" resultMap="employeeMap" parameterType="String">
+		SELECT 
+<!-- 		A.EMP_NO, A.EMP_NM, A.EMP_ID, A.EMP_PSWD, A.DEPT_NO, B.AUTHRT_AUTH -->
+<!-- 		FROM EMPLOYEE A, AUTHRT B -->
+<!-- 		WHERE A.EMP_NO = B.EMP_NO -->
+<!-- 		AND A. EMP_ID = #{username} -->
+		
+		A.EMP_NO
+        , A.EMP_NM
+        , A.EMP_ID
+        , A.EMP_PSWD
+        , A.DEPT_NO
+        , B.AUTHRT_AUTH
+        , (SELECT C.DEPT_NM FROM dept c where a.dept_no = c.dept_no) DEPT_NM
+		FROM 
+            EMPLOYEE A, AUTHRT B, DEPT C
+		WHERE 
+            A.EMP_NO = B.EMP_NO
+		AND A. EMP_ID = #{username}
+	</select>
+	
+<!-- 	비밀번호 변경전 비밀번호 한번더 확인하기 -->
+	<select id="getPw" parameterType="kr.or.oho.vo.EmployeeVO" resultType="String">
+	SELECT 
+	    EMP_PSWD 
+	FROM 
+	    EMPLOYEE
+	WHERE 
+	    EMP_NO = #{empNo}
+	</select>
+	
+	<update id="updatePw" parameterType="kr.or.oho.vo.EmployeeVO">
+		UPDATE 
+			EMPLOYEE
+		SET 
+			EMP_PSWD = #{empPswd}
+		WHERE 
+			EMP_NO = #{empNo}
+	</update>
+	
+</mapper>

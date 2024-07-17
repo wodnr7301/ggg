@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.MypageMapper">
+<select id="profile" resultType="kr.or.oho.vo.EmployeeVO">
+SELECT
+    A.emp_nm
+  , A.emp_brdt
+  , A.emp_eml_addr
+  , A.emp_zip
+  , A.emp_addr
+  , A.emp_daddr
+  , A.emp_telno
+  , A.emp_img
+  , A.emp_gen
+  , A.emp_mrg_yn
+  , A.emp_amt
+  , A.emp_empymd
+  , A.emp_whdwl_ymd
+  , A.emp_jncmp_ymd
+  , A.emp_actno
+  , A.emp_rv
+  , B.dept_nm
+  , C.COMCD_CDNM
+FROM
+    employee A
+  , dept B
+  , COMCD C
+WHERE
+        A.dept_no = B.dept_no
+    AND A.emp_jbgd_nm = C.COMCD_GROUPCD
+    AND A.emp_no = #{empNo}
+</select> 
+
+<select id="franProfile" resultType="kr.or.oho.vo.EmployeeVO">
+SELECT
+    emp_nm
+  , emp_brdt
+  , emp_eml_addr
+  , emp_zip
+  , emp_addr
+  , emp_daddr
+  , emp_telno
+  , emp_img
+  , emp_gen
+  , emp_mrg_yn
+  , emp_amt
+  , emp_empymd
+  , emp_whdwl_ymd
+  , emp_jncmp_ymd
+  , emp_actno
+  , emp_rv
+FROM
+    employee 
+WHERE
+    emp_no = #{empNo}
+</select> 
+ 
+ 
+<update id="profileUpdate" parameterType="kr.or.oho.vo.EmployeeVO">
+UPDATE employee
+SET
+    emp_eml_addr = #{empEmlAddr, jdbcType=VARCHAR}
+  , emp_zip = #{empZip, jdbcType=INTEGER} 
+  , emp_addr = #{empAddr, jdbcType=VARCHAR}
+  , emp_daddr = #{empDaddr, jdbcType=VARCHAR}
+  , emp_telno = #{empTelno, jdbcType=VARCHAR}
+WHERE
+    emp_no = #{empNo}
+</update>
+
+<update id="detailProfileUpdate" parameterType="kr.or.oho.vo.EmployeeVO">
+UPDATE employee
+SET
+   	EMP_MRG_YN = #{empMrgYn, jdbcType=VARCHAR}
+  , EMP_JNCMP_YMD = #{empJncmpYmd, jdbcType=VARCHAR}
+  , EMP_ACTNO = #{empActno, jdbcType=VARCHAR}
+ WHERE
+    emp_no = #{empNo}
+</update>
+
+<select id="getSalary" parameterType="String" resultType="kr.or.oho.vo.SalaryVO">
+	SELECT
+		a.AML_NO,
+		a.AML_DT,
+		a.AML_AMT,
+		a.EMP_NO,
+		a.GIVE_NO,
+		a.DDC_NO,
+		b.EMP_NM
+	FROM
+		ACNT_MNG_LDGR a,
+		EMPLOYEE b
+	WHERE 
+		a.EMP_NO = b.EMP_NO
+		AND a.EMP_NO = #{empNo}
+	ORDER BY
+		AML_DT DESC
+</select>
+
+<select id="getFranchise" parameterType="String" resultType="kr.or.oho.vo.FranchiseVO">
+	        SELECT
+	    A.FRCS_NO
+	,   A.FRCS_NM
+	,   A.FRCS_ADDR
+	,   A.FRCS_DADDR
+	,   A.FRCS_TELNO
+	,	A.EMP_NO
+	,   B.FT_NO
+	FROM
+	    FRANCHISE A, FRCS_TYPE B
+	WHERE A.FT_NO = B.FT_NO
+	AND A.EMP_NO = #{empNo}
+    AND A.FRCS_CLSBIZ_YN = 'N'
+</select>
+
+</mapper>

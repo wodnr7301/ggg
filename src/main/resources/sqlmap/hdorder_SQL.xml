@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.HdorderMapper">
+
+	<resultMap type="kr.or.oho.vo.CnptVO" id="cnptMap">
+		<result property="cnptNo" column="CNPT_NO"/>
+		<result property="cnptNm" column="CNPT_NM"/>
+		<result property="cnptRprsv" column="CNPT_RPRSV"/>
+		<result property="cnptAddr" column="CNPT_ADDR"/>
+		<result property="cnptDaddr" column="CNPT_DADDR"/>
+		<result property="cnptZip" column="CNPT_ZIP"/>
+		<result property="cnptTelno" column="CNPT_TELNO"/>
+		<result property="cnptBzstat" column="CNPT_BZSTAT"/>
+		<result property="cnptCls" column="CNPT_CLS"/>
+		<result property="cnptBzmnNo" column="CNPT_BZMN_NO"/>
+		<result property="empNo" column="EMP_NO"/>
+		<result property="employeeVO.empNm" column="EMP_NM"/>
+	</resultMap>
+	<select id="getCnptInfo" resultMap="cnptMap">
+		SELECT
+		A.CNPT_NO, A.CNPT_NM, A.CNPT_RPRSV, A.CNPT_ADDR, A.CNPT_DADDR, A.CNPT_ZIP, A.CNPT_TELNO, A.CNPT_BZSTAT, A.CNPT_CLS, A.CNPT_BZMN_NO, A.EMP_NO
+		,B.EMP_NM
+		FROM CNPT A, EMPLOYEE B
+		WHERE A.EMP_NO = B.EMP_NO
+	</select>
+	
+	<!-- 발주별 담당자  -->
+	<resultMap type="kr.or.oho.vo.HdorderVO" id="AllHdOrderMap">
+		<result property="hoNo" column="HO_NO"/>
+		<result property="hoDt" column="HO_DT"/>
+		<result property="hoPrcsYn" column="HO_PRCS_YN"/>
+		<result property="hoDeliveryDt" column="HO_DELIVERY_DT"/>
+		<result property="empNo" column="EMP_NO"/>
+		<association  property="employeeNm" resultMap="eNm"></association>
+		<collection property="hdorderDtlVOList" resultMap="gNm"></collection>
+	</resultMap>
+	
+	<resultMap type="kr.or.oho.vo.HdorderDtlVO" id="gNm">
+		<result property="gdsNm" column="GDS_NM"/>
+		<result property="hoNo" column="HO_NO"/>
+		<result property="hodQnt" column="HOD_QNT"/>
+		<result property="gdsNo" column="GDS_NO"/>
+	</resultMap>
+	
+	<resultMap type="kr.or.oho.vo.EmployeeVO" id="eNm">
+		<result property="empNm" column="EMP_NM"/>
+	</resultMap>
+	
+	<select id="getAllHdorder" parameterType="kr.or.oho.vo.HdorderVO"  resultMap="AllHdOrderMap">
+	SELECT 
+		A.HO_NO
+		, A.HO_DT
+		, A.HO_PRCS_YN
+		, A.EMP_NO
+		, A.HO_TOTAL_AMT
+		, A.HO_DELIVERY_DT
+		, B.EMP_NM
+        , C.GDS_NM
+        , C.GDS_NO
+        , C.HOD_QNT
+        , C.HO_NO
+	FROM HDOFC_ORDER A 
+		, EMPLOYEE B
+        , HDOFC_ORDER_DTL C
+		WHERE 1=1 
+		AND A.EMP_NO=B.EMP_NO
+		AND A.HO_NO = C.HO_NO
+		<if test="hoPrcsYn != null and hoPrcsYn != ''">
+            AND A.HO_PRCS_YN = #{hoPrcsYn}
+     	</if>
+     	ORDER BY A.HO_PRCS_YN DESC,
+        A.HO_NO DESC
+	</select>
+
+	<!-- 거래처별 품목 -->
+	<select id="getCnptGds" parameterType="kr.or.oho.vo.CnptVO" resultType="kr.or.oho.vo.GdsVO">
+		SELECT A.GDS_NO
+			 , A.GDS_NM
+			 , A.GDS_PRCHS_AMT
+			 , A.GDS_NTSL_AMT
+			 , A.GDS_STOCK
+			 , A.MIN_GDS_STOCK
+			 , A.GDS_IMG
+			 , A.CNPT_NO 
+		FROM GDS A, CNPT B 
+	    WHERE A.CNPT_NO = B.CNPT_NO AND B.CNPT_NM=#{cnptNm}
+	</select>
+	
+	<!-- 거래처별 발주 정보 -->
+	<resultMap type="kr.or.oho.vo.HdorderVO" id="hdOrderMap">
+		<result property="hoNo" column="HO_NO"/>
+		<result property="hoDt" column="HO_DT"/>
+		<result property="hoPrcsYn" column="HO_PRCS_YN"/>
+		<result property="empNo" column="EMP_NO"/>
+		<collection property="hdorderDtlVOList" resultMap="hdOrderDtMap"></collection>
+	</resultMap>
+	
+	<resultMap type="kr.or.oho.vo.HdorderDtlVO" id="hdOrderDtMap">
+		<result property="hodNo" column="HOD_NO"/>
+		<result property="hodQnt" column="HOD_QNT"/>
+		<result property="hodPrc" column="HOD_PRC"/>
+		<result property="gdsAmt" column="GDS_AMT"/>
+		<result property="gdsNtslAmt" column="GDS_NTSL_AMT"/>
+		<result property="gdsStock" column="GDS_STOCK"/>
+		<result property="gdsImg" column="GDS_IMG"/>
+		<result property="hoNo" column="HO_NO"/>
+		<result property="gdsNm" column="GDS_NM"/>
+		<result property="cnptNo" column="CNPT_NO"/>
+		<result property="gdsNo" column="GDS_NO"/>
+		<result property="wrhsNo" column="WRHS_NO"/>
+	</resultMap>
+	
+	<select id="getOrderDt" parameterType="kr.or.oho.vo.HdorderDtlVO" resultMap="hdOrderMap">
+	SELECT 
+		A.HO_NO
+		, A.HO_DT
+		, A.HO_PRCS_YN
+		, A.EMP_NO
+		, A.HO_TOTAL_AMT 
+		, B.HOD_NO
+		, B.HOD_QNT
+		, B.HOD_PRC
+		, B.GDS_AMT
+		, B.GDS_NTSL_AMT
+		, B.GDS_STOCK
+		, B.GDS_IMG
+		, B.HO_NO
+		, B.GDS_NM
+		, B.CNPT_NO
+		, B.GDS_NO
+		, B.WRHS_NO
+	FROM HDOFC_ORDER A 
+		, HDOFC_ORDER_DTL B
+		WHERE A.HO_NO=B.HO_NO
+		AND B.CNPT_NO=#{cnptNo}
+		AND HO_PRCS_YN ='E'
+	</select>
+	
+	<!-- 조회 상세목록 -->
+	<select id="getOrderDt2" parameterType="kr.or.oho.vo.HdorderVO" resultType="kr.or.oho.vo.HdorderDtlVO">
+	SELECT 
+		B.HOD_NO
+		, B.HOD_QNT
+		, B.HOD_PRC
+		, B.GDS_AMT
+		, B.GDS_NTSL_AMT
+		, B.GDS_STOCK
+		, B.GDS_IMG
+		, B.HO_NO
+		, B.GDS_NM
+		, B.CNPT_NO
+		, B.GDS_NO
+		, B.WRHS_NO
+		, A.HO_PRCS_YN
+		, A.HO_REQUEST
+		, A.HO_DELIVERY_DT
+		, A.HO_DT
+        , C.CNPT_NM
+	FROM HDOFC_ORDER A 
+		, HDOFC_ORDER_DTL B
+        , CNPT C
+		WHERE A.HO_NO=B.HO_NO
+        AND B.HO_NO = #{hoNo}
+        AND B.CNPT_NO = C.CNPT_NO
+        ORDER BY B.CNPT_NO ASC
+	</select>
+	
+	<insert id="hdorderCreate" parameterType="kr.or.oho.vo.HdorderVO">
+		INSERT
+			INTO
+			HDOFC_ORDER(HO_NO
+			, EMP_NO
+			, HO_TOTAL_AMT
+			, HO_DELIVERY_DT)
+		VALUES('HO' || NVL(TRIM(TO_CHAR((SELECT MAX(SUBSTR(HO_NO, 3))+ 1 FROM
+			HDOFC_ORDER), '000')), TRIM((TO_CHAR(1, '000')))),
+			#{empNo},
+			#{hoTotalAmt},
+			#{hoDeliveryDt})
+	</insert>
+	
+	<insert id="hdorderDtCreate" parameterType="kr.or.oho.vo.HdorderDtlVO">
+	 	<!-- insert 실행하기 전에 "String" 타입으로 결과 받고 받은 값을 hoNo에 넣겠다 -->
+	    <selectKey resultType="String" order="BEFORE" keyProperty="hoNo">
+	    	SELECT 'HO'||NVL(TRIM(TO_CHAR((SELECT MAX(SUBSTR(HO_NO,3)) FROM HDOFC_ORDER),'000')), TRIM((TO_CHAR(1,'000')))) FROM DUAL
+	    </selectKey>
+		INSERT
+			INTO
+			HDOFC_ORDER_DTL(HOD_NO
+			, GDS_NM
+			, HOD_QNT
+			, HOD_PRC
+			, GDS_AMT
+			, GDS_NTSL_AMT
+			, GDS_STOCK
+			, HO_NO
+			, CNPT_NO
+			, GDS_NO
+			, WRHS_NO
+			)
+		VALUES('HOD' || NVL(TRIM(TO_CHAR((SELECT MAX(SUBSTR(HOD_NO, 4))+ 1 FROM HDOFC_ORDER_DTL), '000')), TRIM((TO_CHAR(1, '000'))))
+			, #{gdsNm}
+			, #{hodQnt}
+			, #{hodPrc}
+			, #{gdsAmt}
+			, #{gdsNtslAmt}
+			, #{gdsStock}
+			, #{hoNo}
+			, #{cnptNo}
+			, #{gdsNo}
+			, #{wrhsNo}
+			)
+	</insert>     
+	
+	<delete id="deleteHdorder" parameterType="kr.or.oho.vo.HdorderVO">
+	    DELETE FROM HDOFC_ORDER
+	    WHERE HO_NO = #{hoNo}
+	</delete> 
+	
+	<delete id="deleteHdorderDtl" parameterType="kr.or.oho.vo.HdorderVO">
+	    DELETE FROM HDOFC_ORDER_DTL
+	    WHERE HO_NO = #{hoNo}
+	</delete> 
+	
+	<!-- 상품디테일 -->
+	<select id="gdsDetail" parameterType="String" resultType="kr.or.oho.vo.GdsVO">
+		SELECT
+			GDS_NO
+			, GDS_NM
+			, GDS_PRCHS_AMT
+			, GDS_NTSL_AMT
+			, GDS_STOCK
+			, MIN_GDS_STOCK
+			, GDS_IMG
+			, CNPT_NO
+		FROM
+			GDS
+		WHERE
+			GDS_NO = #{gdsNo}
+	</select>
+	
+	<update id="updateYn" parameterType="kr.or.oho.vo.FrcOrderVO">
+		UPDATE FRCS_ORDER 
+		SET FO_PRCS_YN = #{foPrcsYn}
+		<if test='foPrcsYn == "D"'>
+		, FO_SHIPPING_STRDT = SYSDATE
+		</if>
+		<if test='foRequest != null and foRequest != ""'>
+		, FO_REQUEST = #{foRequest}
+		</if>
+		WHERE FO_NO = #{foNo}
+	</update>
+	
+	<select id="getOrderDetail" parameterType="kr.or.oho.vo.FrcOrderVO" resultType="kr.or.oho.vo.FrcOrderDtlVO">
+		SELECT
+			B.FOD_NO
+			, B.GDS_NO
+			, B.FO_NO
+			, B.FOD_UNIT
+			, B.FOD_QNT
+			, B.FOD_PRC
+			, B.FOD_AMT
+			, B.FOD_GDS_NM
+		FROM
+			FRCS_ORDER A
+			, FRCS_ORDER_DTL B
+		WHERE
+			1 = 1
+			AND A.FO_NO = B.FO_NO
+			AND A.FO_NO = #{foNo}
+	</select>
+	
+	<update id="upYn" parameterType="String">
+		UPDATE FRCS_ORDER
+		SET FO_YN = 'Y'
+		WHERE FO_NO= #{foNo}
+	</update>
+	
+	<update id="updatePrcsYn" parameterType="String">
+		UPDATE HDOFC_ORDER
+		SET HO_PRCS_YN = 'E'
+		WHERE HO_NO= #{hoNo}
+	</update>
+	
+	<!-- 재고관리 페이지 -->
+	<!-- 모든 입고창고 정보 가져오기 -->
+	<select id="getAllWrhs" resultType="kr.or.oho.vo.ComcdVO">
+		SELECT COMCD_GROUPCD, COMCD_CDNM FROM COMCD WHERE COMCD_CDNMCOM_GC='F1'
+	</select>
+	
+	<!-- 모든 재고(gds) 정보 가져오기 -->
+	<select id="getAllStock" parameterType="kr.or.oho.vo.GdsVO" resultType="kr.or.oho.vo.GdsVO">
+		SELECT
+			A.GDS_NO
+			, A.GDS_NM
+			, A.GDS_PRCHS_AMT
+			, A.GDS_NTSL_AMT
+			, A.GDS_STOCK
+			, A.MIN_GDS_STOCK
+			, A.GDS_IMG
+			, A.CNPT_NO
+			, A.GDS_GU
+			, A.WRHS_NO
+			, C.COMCD_CDNM
+			, B.CNPT_NM
+		FROM
+			GDS A
+			, CNPT B
+			, COMCD C
+		WHERE 1=1
+			AND A.CNPT_NO = B.CNPT_NO
+			AND A.GDS_GU = C.COMCD_GROUPCD
+			<if test="comcdGroupcd != null and comcdGroupcd != ''">
+				AND A.GDS_GU = #{comcdGroupcd}
+			</if>
+			ORDER BY A.WRHS_NO
+	</select>
+	
+	<update id="updateSave" parameterType="hashmap">
+		UPDATE GDS 
+		SET GDS_STOCK = ((SELECT GDS_STOCK FROM GDS WHERE GDS_NO = #{gdsNo})+#{hodQnt})
+		WHERE GDS_NO = #{gdsNo}
+	</update>
+	
+	<select id="getWrhsGds" parameterType="kr.or.oho.vo.GdsVO" resultType="kr.or.oho.vo.GdsVO">
+		SELECT
+			A.GDS_NO
+			, A.GDS_NM
+			, A.GDS_PRCHS_AMT
+			, A.GDS_NTSL_AMT
+			, A.GDS_STOCK
+			, A.MIN_GDS_STOCK
+			, A.GDS_IMG
+			, A.CNPT_NO
+			, A.GDS_GU
+			, A.WRHS_NO
+			, C.COMCD_CDNM
+			, B.CNPT_NM
+		FROM
+			GDS A
+			, CNPT B
+			, COMCD C
+		WHERE 1=1
+			AND A.CNPT_NO = B.CNPT_NO
+			AND A.GDS_GU = C.COMCD_GROUPCD
+		<if test="wrhsNo != null and wrhsNo != ''">
+			AND WRHS_NO = #{wrhsNo}
+		</if>
+		ORDER BY A.WRHS_NO
+	</select>
+	
+	<resultMap type="kr.or.oho.vo.FrcOrderVO" id="frcorderMap2">
+		<result property="foNo" column="FO_NO"/>
+		<result property="foOdt" column="FO_ODT"/>
+		<result property="foPrcsYn" column="FO_PRCS_YN"/>
+		<result property="foYn" column="FO_YN"/>
+		<result property="foStlmDt" column="FO_STLM_DT"/>
+		<result property="foMnm" column="FO_MNM"/>
+		<result property="foShippingStrdt" column="FO_SHIPPING_STRDT"/>
+		<result property="foShippingEnddt" column="FO_SHIPPING_ENDDT"/>
+		<result property="frcsNo" column="FRCS_NO"/>
+		<result property="foDeliveryDt" column="FO_DELIVERY_DT"/>
+		<result property="foRequest" column="FO_REQUEST"/>
+		<result property="frcsNm" column="FRCS_NM"/>
+		<collection property="frcOrderDtlVOList" resultMap="frcorderDtlMap2"></collection>
+	</resultMap>
+	
+	<resultMap type="kr.or.oho.vo.FrcOrderDtlVO" id="frcorderDtlMap2">
+		<result property="fodNo" column="FOD_NO"/>
+		<result property="gdsNo" column="GDS_NO"/>
+		<result property="foNo" column="FO_NO"/>
+		<result property="fodUnit" column="FOD_UNIT"/>
+		<result property="fodQnt" column="FOD_QNT"/>
+		<result property="fodPrc" column="FOD_PRC"/>
+		<result property="fodAmt" column="FOD_AMT"/>
+		<result property="fodGdsNm" column="FOD_GDS_NM"/>
+	</resultMap>
+	<select id="getAllFrcorder" parameterType="kr.or.oho.vo.FrcOrderVO" resultMap="frcorderMap2">
+		SELECT
+			A.FO_NO
+			, A.FO_ODT
+			, A.FO_PRCS_YN
+			, A.FO_STLM_DT
+			, A.FO_MNM
+			, A.FO_SHIPPING_STRDT
+			, A.FO_SHIPPING_ENDDT
+			, A.FRCS_NO
+			, A.FO_DELIVERY_DT
+			, A.FO_REQUEST
+			, A.FO_YN
+			, B.FOD_NO
+			, B.GDS_NO
+			, B.FO_NO
+			, B.FOD_UNIT
+			, B.FOD_QNT
+			, B.FOD_PRC
+			, B.FOD_AMT
+			, B.FOD_GDS_NM
+			, C.FRCS_NM
+		FROM
+			FRCS_ORDER A
+            INNER JOIN FRCS_ORDER_DTL B ON A.FO_NO = B.FO_NO 
+			INNER JOIN FRANCHISE C ON A.FRCS_NO = C.FRCS_NO
+			AND C.FRCS_CLSBIZ_YN = 'N'
+		<if test='foPrcsYn != null and foPrcsYn != "" and foPrcsYn != "E"'>
+			AND A.FO_PRCS_YN = #{foPrcsYn}
+		</if>
+		<if test='foPrcsYn == "E"'>
+			AND A.FO_PRCS_YN IN ('E', 'F')
+		</if>
+		<if test="frcsNo != null and frcsNo != ''">
+			AND A.FRCS_NO = #{frcsNo}
+		</if>
+		ORDER BY A.FO_PRCS_YN ASC
+	</select>
+	
+	<select id="getfrcOrderDtl" parameterType="kr.or.oho.vo.FrcOrderVO" resultType="kr.or.oho.vo.FrcOrderDtlVO">
+	SELECT
+		A.FOD_NO
+		, A.GDS_NO
+		, A.FO_NO
+		, A.FOD_UNIT
+		, A.FOD_QNT
+		, A.FOD_PRC
+		, A.FOD_AMT
+		, A.FOD_GDS_NM
+        , B.FO_ODT
+        , B.FO_PRCS_YN
+        , B.FO_REQUEST
+        , B.FO_DELIVERY_DT
+        , C.FRCS_NM
+	FROM 
+		FRCS_ORDER_DTL A, FRCS_ORDER B, FRANCHISE C
+	WHERE 1=1
+    AND B.FRCS_NO = C.FRCS_NO
+    AND A.FO_NO = B.FO_NO
+    AND A.FO_NO = #{foNo}
+	</select>
+	
+	<select id="locFrn" parameterType="kr.or.oho.vo.ComcdVO" resultType="kr.or.oho.vo.FranchiseVO">
+		SELECT
+			FRCS_NO
+			, FRCS_NM
+			, FRCS_ADDR
+			, FRCS_DADDR
+			, FRCS_ZIP
+			, FRCS_TELNO
+			, EMP_NO
+			, FT_NO
+			, FT_RGN_NM
+			, FRCS_CLSBIZ_YN
+		FROM
+			FRANCHISE
+		WHERE 1=1
+		<if test="comcdGroupcd != null and comcdGroupcd != ''">
+			AND FT_RGN_NM =#{comcdGroupcd}
+		</if>
+	</select>
+	
+</mapper>

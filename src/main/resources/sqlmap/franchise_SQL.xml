@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.FrcMapper">
+
+<resultMap type="kr.or.oho.vo.EmployeeVO"  id="employeeMap">
+		<result property="empNo" column="EMP_NO"/>
+		<result property="empNm" column="EMP_NM"/>
+		<result property="empBrdt" column="EMP_BRDT"/>
+		<result property="empEmlAddr" column="EMP_EML_ADDR"/>
+		<result property="empZip" column="EMP_ZIP"/>
+		<result property="empAddr" column="EMP_ADDR"/>
+		<result property="empDaddr" column="EMP_DADDR"/>
+		<result property="empTelno" column="EMP_TELNO"/>
+		<result property="empMrgYn" column="EMP_MRG_YN"/>
+		<result property="empAmt" column="EMP_AMT"/>
+		<result property="empImg" column="EMP_IMG"/>
+		<result property="empId" column="EMP_ID"/>
+		<result property="empPswd" column="EMP_PSWD"/>
+		<result property="empGen" column="EMP_GEN"/>
+		<result property="empEmpymd" column="EMP_EMPYMD"/>
+		<result property="empWhdwlYmd" column="EMP_WHDWL_YMD"/>
+		<result property="empJncmpYmd" column="EMP_JNCMP_YMD"/>
+		<result property="empActno" column="EMP_ACTNO"/>
+		<result property="empRv" column="EMP_RV"/>
+		<result property="enabled" column="ENABLED"/>
+		<result property="empJbgdNm" column="EMP_JBGD_NM"/>
+		<result property="empJbttlNm" column="EMP_JBTTL_NM"/>
+		<result property="empClsf" column="EMP_CLSF"/>
+		<collection property="franchiseVOList"  resultMap="franchiseVOMap"></collection>
+	</resultMap>
+	<resultMap type="kr.or.oho.vo.FranchiseVO" id="franchiseVOMap">
+		<result property="frcsNo" column="FRCS_NO"/>
+		<result property="frcsNm" column="FRCS_NM"/>
+		<result property="frcsAddr" column="FRCS_ADDR"/>
+		<result property="frcsDaddr" column="FRCS_DADDR"/>
+		<result property="frcsZip" column="FRCS_ZIP"/>
+		<result property="frcsTelno" column="FRCS_TELNO"/>
+		<result property="empNo" column="EMP_NO"/>
+		<result property="ftNo" column="FT_NO"/>
+		<result property="ftRgnNm" column="FT_RGN_NM"/>
+	</resultMap>
+	
+
+<select id="frcsNoSelect" resultType="String">
+	SELECT DISTINCT
+	    'FRC'||TRIM(TO_CHAR((SELECT NVL(MAX(TO_NUMBER(SUBSTR(FRCS_NO,4))),0)+1 FROM FRANCHISE),'000'))
+	FROM
+	    DUAL
+</select>
+
+<insert id="add" parameterType="kr.or.oho.vo.FranchiseVO">
+	INSERT INTO franchise (
+	    frcs_no
+	    , frcs_nm
+	    , frcs_addr
+	    , frcs_daddr
+	    , frcs_zip
+	    , frcs_telno
+	    , emp_no
+	    , ft_no
+	    , ft_rgn_nm
+	) VALUES (
+	    #{frcsNo}
+	  , #{frcsNm}
+	  , #{frcsAddr}
+	  , #{frcsDaddr}
+	  , #{frcsZip}
+	  , #{frcsTelno}
+	  , #{empNo}
+	  , #{ftNo}
+	  , #{ftRgnNm}
+	)
+</insert>
+
+<select id="frcsList" resultType="kr.or.oho.vo.FranchiseVO">
+	SELECT
+	    A.FRCS_NO
+	,   A.FRCS_NM
+	,   A.FRCS_ADDR
+	,   A.FRCS_DADDR
+	,   A.FRCS_TELNO
+	,	A.EMP_NO
+	,   B.FT_NO
+	FROM
+	    FRANCHISE A, FRCS_TYPE B
+	WHERE A.FT_NO = B.FT_NO
+	AND A.FRCS_CLSBIZ_YN = 'N'
+	ORDER BY A.FRCS_NO ASC 
+</select>
+
+<select id="frcsDetail" parameterType="kr.or.oho.vo.EmployeeVO" resultType="kr.or.oho.vo.EmployeeVO">
+	SELECT
+	    A.EMP_NM
+	,   A.EMP_GEN
+	,   A.EMP_EML_ADDR
+	,   A.EMP_TELNO
+	,   A.EMP_ADDR
+	,   A.EMP_DADDR
+	,   A.EMP_BRDT
+	,	A.EMP_JNCMP_YMD
+	, 	A.EMP_ACTNO
+	,   B.FRCS_NO
+	FROM 
+		EMPLOYEE A, FRANCHISE B
+	WHERE A.EMP_NO = B.EMP_NO
+	AND FRCS_NO = #{frcsNo}
+</select>
+
+<select id="frcsRegionList" resultType="kr.or.oho.vo.FranchiseVO">
+	SELECT
+	    b.frcs_no
+	  , b.frcs_addr
+	  , b.frcs_daddr
+	  , b.frcs_zip
+	  , a.ft_nm
+	  , c.comcd_cdnm
+	FROM
+	    franchise b
+	  , frcs_type a
+	  , comcd     c
+	WHERE
+	        a.ft_no = b.ft_no
+	    AND c.comcd_groupcd = b.ft_rgn_nm
+</select>
+
+<select id="countRegion" resultType="kr.or.oho.vo.ComcdVO">
+	SELECT
+	    comcd_groupcd
+	  , comcd_cdnm
+	  , COUNT(frcs_no) countRegion
+	FROM
+	    comcd c
+	LEFT JOIN
+	    franchise f
+	ON
+	    c.comcd_groupcd = f.ft_rgn_nm
+	WHERE
+	    comcd_cdnmcom_gc = 'D1'
+	AND comcd_use_yn = 'Y'
+	GROUP BY comcd_groupcd , comcd_cdnm
+	ORDER BY
+	    comcd_groupcd
+</select>
+
+<select id="countRegionYear" resultType="kr.or.oho.vo.ComcdVO">
+	SELECT
+	    d.comcd_groupcd
+	  , d.comcd_cdnm
+	  , COUNT(T.frcs_no) countRegion
+	FROM
+	    comcd d
+	LEFT JOIN
+	    (SELECT
+	        f.ft_rgn_nm
+	      , f.frcs_no
+	    FROM
+	        franchise f
+	    LEFT JOIN
+	        ctrt a
+	    ON
+	        a.frcs_no = f.frcs_no
+	    WHERE
+	        a.ctrt_no in (
+	                select b.ctrt_no from ctrt b where TO_CHAR(b.ctrt_ymd, 'YYYY') = TO_CHAR(SYSDATE, 'YYYY')
+	        )
+	    ) T
+	ON
+	    d.comcd_groupcd = T.ft_rgn_nm
+	WHERE
+	        comcd_cdnmcom_gc = 'D1'
+	    AND comcd_use_yn = 'Y'
+	GROUP BY
+	    d.comcd_groupcd , d.comcd_cdnm
+	ORDER BY
+	    d.comcd_groupcd
+</select>
+
+<!-- 가맹점정보 수정화면 -->
+<select id="getFranchiseInfo" resultMap="franchiseVOMap" parameterType="String">
+	SELECT
+		FRCS_NO
+	,	FRCS_NM
+	,	FRCS_ZIP
+	,	FRCS_ADDR
+	,	FRCS_DADDR
+	,	FRCS_TELNO
+	,	EMP_NO
+	FROM
+		FRANCHISE 
+	WHERE 
+		FRCS_NO = #{frcsNo}
+</select>
+
+<!-- 가맹점주 수정화면 -->
+<select id="getFrcsEmpInfo" parameterType="String" resultType="kr.or.oho.vo.EmployeeVO">
+SELECT 
+		A.EMP_NO ,
+        A.EMP_NM ,
+        A.EMP_TELNO ,
+        A.EMP_ZIP ,
+        A.EMP_ADDR ,
+        A.EMP_DADDR ,
+        A.EMP_JNCMP_YMD ,
+        A.EMP_ACTNO 
+    FROM 
+        EMPLOYEE A
+        INNER JOIN FRANCHISE B 
+        ON A.EMP_NO = B.EMP_NO
+    WHERE 
+        B.FRCS_NO = #{frcsNo}
+</select>
+
+
+<!-- 가맹점 정보 수정 -->
+<update id="updateFranchiseInfo" parameterType="kr.or.oho.vo.FranchiseVO">
+	UPDATE 
+		FRANCHISE
+	SET 
+		  FRCS_NM = #{frcsNm}
+		, FRCS_ZIP = #{frcsZip}
+		, FRCS_Addr = #{frcsAddr}
+		, FRCS_Daddr = #{frcsDaddr}
+		, FRCS_TELNO = #{frcsTelno}
+	WHERE
+		FRCS_NO = #{frcsNo}
+</update>
+
+<!-- 가맹점주 정보 수정 -->
+<update id="updateFrcsEmpInfo" parameterType="kr.or.oho.vo.EmployeeVO">
+	UPDATE 
+		EMPLOYEE
+	SET 
+		  EMP_TELNO = #{empTelno}
+		, EMP_ZIP = #{empZip}
+		, EMP_ADDR = #{empAddr}
+		, EMP_DADDR = #{empDaddr}
+		, EMP_JNCMP_YMD = #{empJncmpYmd}
+		, EMP_ACTNO = #{empActno}
+	WHERE 
+		EMP_NO = #{empNo}
+</update>
+
+<!-- 가맹점 삭제 -->
+<update id="deleteFranchise" parameterType="String" >
+	 UPDATE 
+	 	FRANCHISE
+     SET 
+     	FRCS_CLSBIZ_YN = 'Y' 
+     WHERE 
+     	FRCS_NO = #{frcsNo}
+</update>
+
+<update id="deleteFrcsEmp" parameterType="String" >
+	 UPDATE 
+	 	EMPLOYEE
+     SET 
+     	ENABLED = '0'
+     WHERE 
+     	EMP_NO = #{empNo}
+</update>
+
+</mapper>

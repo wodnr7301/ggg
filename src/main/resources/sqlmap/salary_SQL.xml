@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.SalaryMapper">
+
+	<select id="allList" resultType="kr.or.oho.vo.SalaryVO">
+		SELECT
+			a.AML_NO,
+			a.AML_DT,
+			a.AML_AMT,
+			a.EMP_NO,
+			a.GIVE_NO,
+			a.DDC_NO,
+			b.EMP_NM
+		FROM
+			ACNT_MNG_LDGR a,
+			EMPLOYEE b
+		WHERE 
+			a.EMP_NO = b.EMP_NO
+		ORDER BY
+			AML_DT DESC
+	</select>
+
+	<select id="getSalary" resultType="kr.or.oho.vo.SalaryVO" parameterType="String">
+		SELECT 
+			a.AML_NO, 
+			a.AML_DT, 
+			a.AML_AMT, 
+			a.EMP_NO, 
+			a.GIVE_NO, 
+			a.DDC_NO,
+			b.EMP_NM
+		FROM 
+			ACNT_MNG_LDGR a, 
+			EMPLOYEE b
+		WHERE
+			a.EMP_NO = b.EMP_NO 
+		AND	
+			AML_NO = #{amlNO}
+	</select>
+	
+	<select id="getGive" resultType="kr.or.oho.vo.GiveVO" parameterType="String">
+		SELECT
+			GIVE_NO,
+			GIVE_AMT,
+			GIVE_EXTS,
+			GIVE_NIGHT,
+			GIVE_HLDY
+		FROM
+			GIVE
+		WHERE
+			GIVE_NO = #{giveNo}
+	</select>
+	
+	<select id="getDdc" resultType="kr.or.oho.vo.DdcVO" parameterType="String">
+		SELECT
+			DDC_NO,
+			DDC_INSRNC,
+			DDC_INCTX
+		FROM
+			DDC
+		WHERE
+			DDC_NO = #{ddcNo}
+	</select>
+	
+	<select id="getName" resultType="kr.or.oho.vo.EmployeeVO">
+		SELECT
+			EMP_NO,
+			EMP_NM,
+			DEPT_NO,
+			EMP_JBGD_NM
+		FROM
+			EMPLOYEE
+		WHERE 
+			EMP_CLSF = 'A301'
+		AND	
+			ENABLED = '1'
+	</select>
+	
+	<insert id="createGive" parameterType="kr.or.oho.vo.SalaryVO">
+		INSERT
+			INTO
+			GIVE
+		(GIVE_NO,
+			GIVE_AMT,
+			GIVE_EXTS,
+			GIVE_NIGHT,
+			GIVE_HLDY)
+		VALUES(
+		('GIV'||NVL(TRIM(TO_CHAR((SELECT MAX(TO_NUMBER(SUBSTR(GIVE_NO,4)))+1 FROM GIVE),'000')), TRIM((TO_CHAR(1,'000'))))),
+		#{giveAmt},
+		#{giveExts},
+		#{giveNight},
+		#{giveHldy})
+	</insert>
+	
+	<insert id="createDdc" parameterType="kr.or.oho.vo.SalaryVO">
+		INSERT
+			INTO
+			DDC
+			(
+			DDC_NO,
+			DDC_INSRNC,
+			DDC_INCTX
+			)
+		VALUES(
+			('DDC'||NVL(TRIM(TO_CHAR((SELECT MAX(TO_NUMBER(SUBSTR(DDC_NO,4)))+1 FROM DDC),'000')), TRIM((TO_CHAR(1,'000'))))),
+			#{ddcInsrnc},
+			#{ddcInctx}
+			)
+	</insert>
+	
+	<insert id="createSalary" parameterType="kr.or.oho.vo.SalaryVO">
+		INSERT
+			INTO
+			ACNT_MNG_LDGR
+			(
+			AML_NO,
+			AML_DT,
+			AML_AMT,
+			EMP_NO,
+			GIVE_NO,
+			DDC_NO
+			)
+		VALUES(
+			('AML'||NVL(TRIM(TO_CHAR((SELECT MAX(TO_NUMBER(SUBSTR(AML_NO,4)))+1 FROM ACNT_MNG_LDGR),'000')), TRIM((TO_CHAR(1,'000'))))),
+			SYSDATE,
+			#{amlAmt},
+			#{empNo},
+			(SELECT GIVE_NO FROM (SELECT GIVE_NO FROM GIVE ORDER BY GIVE_NO DESC) WHERE ROWNUM = 1),
+			(SELECT DDC_NO FROM (SELECT DDC_NO FROM DDC ORDER BY DDC_NO DESC) WHERE ROWNUM = 1)
+			)
+	</insert>
+	
+	<delete id="deleteSalary" parameterType="kr.or.oho.vo.SalaryVO">
+		DELETE
+		FROM
+			ACNT_MNG_LDGR
+		WHERE
+			AML_NO = #{amlNo}
+	</delete>
+	
+	<delete id="deleteGive" parameterType="kr.or.oho.vo.SalaryVO">
+		DELETE
+		FROM
+			GIVE
+		WHERE
+			GIVE_NO = #{giveNo}
+	</delete>
+	
+	<delete id="deleteDdc" parameterType="kr.or.oho.vo.SalaryVO">
+		DELETE
+		FROM
+			DDC
+		WHERE
+			DDC_NO = #{ddcNo}
+	</delete>
+	
+	<update id="updateSalary" parameterType="kr.or.oho.vo.SalaryVO">
+		UPDATE
+			ACNT_MNG_LDGR
+		SET
+			AML_DT = SYSDATE,
+			AML_AMT = #{amlAmt},
+			EMP_NO = #{empNo},
+			GIVE_NO = #{giveNo},
+			DDC_NO = #{ddcNo}
+		WHERE
+			AML_NO = #{amlNo}
+	</update>
+	
+	<update id="updateGive" parameterType="kr.or.oho.vo.SalaryVO">
+		UPDATE
+			GIVE
+		SET
+			GIVE_AMT = #{giveAmt},
+			GIVE_EXTS = #{giveExts},
+			GIVE_NIGHT = #{giveNight},
+			GIVE_HLDY = #{giveHldy}
+		WHERE
+			GIVE_NO = #{giveNo}
+	</update>
+	
+	<update id="updateDdc" parameterType="kr.or.oho.vo.SalaryVO">
+		UPDATE
+			DDC
+		SET
+			DDC_INSRNC = #{ddcInsrnc},
+			DDC_INCTX = #{ddcInctx}
+		WHERE
+			DDC_NO = #{ddcNo}
+	</update>
+</mapper>

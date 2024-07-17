@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.SrvyMapper">
+
+<resultMap type="kr.or.oho.vo.SrvyVO" id="srvyMap">
+	<result property="srvyNo" column="SRVY_NO"/>
+	<result property="srvyTtl" column="SRVY_TTL"/>
+	<result property="srvyCn" column="SRVY_CN"/>
+	<result property="srvyTrgt" column="SRVY_TRGT"/>
+	<result property="srvyYmd" column="SRVY_YMD"/>
+	<result property="srvyEndDate" column="SRVY_END_DATE"/>
+	<result property="empNo" column="EMP_NO"/>
+	<collection property="qstnMcList" resultMap="qstnMcMap"></collection>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.QstnMcVO" id="qstnMcMap">
+	<result property="qmNo" column="QM_NO"/>
+	<result property="srvyNo" column="SRVY_NO"/>
+	<result property="qmTtl" column="QM_TTL"/>
+	<collection property="exampleList" resultMap="exampleMap"></collection>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.ExampleVO" id="exampleMap">
+	<result property="expNo" column="EXP_NO"/>
+	<result property="qmNo" column="QM_NO"/>
+	<result property="srvyNo" column="SRVY_NO"/>
+	<result property="empCn" column="EMP_CN"/>
+</resultMap>
+
+<select id="srvyNoSelect" resultType="String">
+	SELECT DISTINCT
+	    'SRV'||TRIM(TO_CHAR((SELECT NVL(MAX(TO_NUMBER(SUBSTR(SRVY_NO,4))),0)+1 FROM SRVY),'000'))
+	FROM
+	    DUAL
+</select>
+
+<insert id="srvyAdd" parameterType="kr.or.oho.vo.SrvyVO">
+	INSERT INTO srvy (
+	    srvy_no
+	    , srvy_ttl
+	    , srvy_cn
+	    , srvy_trgt
+	    , srvy_ymd
+	    , srvy_end_date
+	    , emp_no
+	) VALUES (
+	    #{srvyNo}
+	  , #{srvyTtl}
+	  , #{srvyCn}
+	  , #{srvyTrgt}
+	  , #{srvyYmd}
+	  , #{srvyEndDate}
+	  , #{empNo}
+	)
+</insert>
+
+<select id="qmNoSelect" resultType="String">
+	SELECT DISTINCT
+	    'QMC'||TRIM(TO_CHAR((SELECT NVL(MAX(TO_NUMBER(SUBSTR(QM_NO,4))),0)+1 FROM QSTN_MC),'000'))
+	FROM
+	    DUAL
+</select>
+
+<insert id="qmcAdd" parameterType="kr.or.oho.vo.QstnMcVO">
+	INSERT INTO qstn_mc (
+	    qm_no
+	    , srvy_no
+	    , qm_ttl
+	) VALUES (
+	    #{qmNo}
+	  , #{srvyNo}
+	  , #{qmTtl}
+	)
+</insert>
+
+<insert id="expAdd" parameterType="kr.or.oho.vo.ExampleVO">
+	<selectKey resultType="String" order="BEFORE" keyProperty="expNo">
+		SELECT DISTINCT
+		    'EXP'||TRIM(TO_CHAR((SELECT NVL(MAX(TO_NUMBER(SUBSTR(EXP_NO,4))),0)+1 FROM EXAMPLE),'000'))
+		FROM
+		    DUAL
+	</selectKey>
+	INSERT INTO example (
+	    exp_no
+	    , qm_no
+	    , srvy_no
+	    , emp_cn
+	) VALUES (
+	    #{expNo}
+	  , #{qmNo}
+	  , #{srvyNo}
+	  , #{empCn}
+	)
+</insert>
+
+<select id="list" resultMap="srvyMap">
+	SELECT
+	    c.srvy_no
+	  , c.srvy_ttl
+	  , c.srvy_cn
+	  , c.srvy_trgt
+	  , c.srvy_ymd
+	  , c.srvy_end_date
+	  , c.emp_no
+	  , b.exp_no
+	  , b.qm_no
+	  , b.srvy_no
+	  , b.emp_cn
+	  , a.qm_no
+	  , a.srvy_no
+	  , a.qm_ttl
+	FROM
+	    example b
+	  , qstn_mc a
+	  , srvy    c
+	WHERE
+	        a.qm_no = b.qm_no
+	    AND a.srvy_no = b.srvy_no
+	    AND c.srvy_no = a.srvy_no
+	ORDER BY
+		c.srvy_no, a.qm_no, b.exp_no
+</select>
+
+<delete id="expDelete" parameterType="kr.or.oho.vo.SrvyVO">
+	DELETE FROM example WHERE srvy_no = #{srvyNo}
+</delete>
+
+<delete id="qmcDelete" parameterType="kr.or.oho.vo.SrvyVO">
+	DELETE FROM qstn_mc WHERE srvy_no = #{srvyNo}
+</delete>
+
+<delete id="srvyDelete" parameterType="kr.or.oho.vo.SrvyVO">
+	DELETE FROM srvy WHERE srvy_no = #{srvyNo}
+</delete>
+
+<update id="updateSurvey" parameterType="kr.or.oho.vo.SrvyVO">
+	UPDATE srvy
+	SET
+	    srvy_ymd = #{srvyYmdStr},
+	    srvy_end_date = #{srvyEndDateStr}
+	WHERE
+	    srvy_no = #{srvyNo}
+</update>
+
+<select id="surveyDetail" parameterType="kr.or.oho.vo.SrvyVO" resultType="kr.or.oho.vo.SrvyVO">
+	SELECT
+	    srvy_no
+	  , srvy_ttl
+	  , srvy_cn
+	  , srvy_trgt
+	  , srvy_ymd
+	  , srvy_end_date
+	  , emp_no
+	FROM
+	    srvy
+	WHERE
+	    srvy_no = #{srvyNo}
+</select>
+
+<select id="qmcDetail" parameterType="kr.or.oho.vo.SrvyVO" resultType="kr.or.oho.vo.QstnMcVO">
+	SELECT
+	    qm_no
+	  , srvy_no
+	  , qm_ttl
+	FROM
+	    qstn_mc
+	WHERE
+	    srvy_no = #{srvyNo}
+	ORDER BY
+    	qm_no
+</select>
+
+<select id="expDetail" parameterType="hashMap" resultType="kr.or.oho.vo.ExampleVO">
+	SELECT
+	    exp_no
+	  , qm_no
+	  , srvy_no
+	  , emp_cn
+	FROM
+	    example
+	WHERE
+	    srvy_no = #{srvyNo}
+	AND qm_no = #{qmNo}
+	ORDER BY
+    	exp_no
+</select>
+
+<insert id="submitAns" parameterType="kr.or.oho.vo.AnsMcVO">
+	<selectKey resultType="String" order="BEFORE" keyProperty="amNo">
+		SELECT DISTINCT
+		    'ANS'||TRIM(TO_CHAR((SELECT NVL(MAX(TO_NUMBER(SUBSTR(AM_NO,4))),0)+1 FROM ANS_MC),'000'))
+		FROM
+		    DUAL
+	</selectKey>
+	INSERT INTO ans_mc (
+	    am_no
+	    , emp_no
+	    , exp_no
+	) VALUES (
+	    #{amNo}
+	  , #{empNo}
+	  , #{expNo}
+	)
+</insert>
+
+<select id="ableSrvyList" parameterType="hashMap" resultType="kr.or.oho.vo.SrvyVO">
+	SELECT
+	    srvy_no
+	  , srvy_ttl
+	  , srvy_end_date
+	FROM
+	    srvy
+	WHERE
+	    srvy_trgt = #{srvyTrgt}
+	AND TO_DATE(srvy_end_date, 'YYYY-MM-DD') <![CDATA[>=]]> TO_DATE(SYSDATE, 'YYYY-MM-DD')
+	AND srvy_no NOT IN (
+	    SELECT DISTINCT
+	        a.srvy_no
+	    FROM
+	        ans_mc  b
+	      , example a
+	    WHERE
+	        a.exp_no = b.exp_no
+	    AND b.emp_no = #{empNo}
+	)
+	ORDER BY
+	    srvy_end_date
+</select>
+
+<select id="srvyMngList" parameterType="String" resultType="kr.or.oho.vo.SrvyVO">
+	SELECT
+	    srvy_no
+	  , srvy_ttl
+	  , srvy_trgt
+	  , srvy_ymd
+	  , srvy_end_date
+	FROM
+	    srvy
+	WHERE
+	    emp_no = #{empNo}
+	AND TO_DATE(srvy_end_date, 'YYYY-MM-DD') <![CDATA[>=]]> TO_DATE(SYSDATE, 'YYYY-MM-DD')
+	ORDER BY
+	    srvy_no DESC
+</select>
+
+<select id="srvyMngFinList" parameterType="String" resultType="kr.or.oho.vo.SrvyVO">
+	SELECT
+	    srvy_no
+	  , srvy_ttl
+	  , srvy_trgt
+	  , srvy_ymd
+	  , srvy_end_date
+	FROM
+	    srvy
+	WHERE
+	    emp_no = #{empNo}
+	AND TO_DATE(srvy_end_date, 'YYYY-MM-DD') <![CDATA[<]]> TO_DATE(SYSDATE, 'YYYY-MM-DD')
+	 
+	ORDER BY
+	    srvy_no DESC
+</select>
+
+</mapper>

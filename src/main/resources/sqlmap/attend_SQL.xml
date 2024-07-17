@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.AttendMapper">
+
+	<select id="getAttendList" parameterType="String" resultType="kr.or.oho.vo.AttendVO">
+		SELECT 
+            WA_NO
+			,WA_DT	
+			, EA_OUTTIME
+			, WA_YMD
+			, WA_RSN
+			, WA_STATUS
+			, EMP_NO
+			, BACK_COLOR
+        FROM WORK_ATTENDENCE
+        WHERE
+			EMP_NO = #{empNo}
+	</select>
+	
+	<select id="getCountList" parameterType="String" resultType="int" >
+		SELECT COUNT(WA_NO)
+			FROM WORK_ATTENDENCE
+		WHERE
+    		EMP_NO = #{empNo}
+     		AND WA_STATUS = #{waStatus}
+    		AND EXTRACT(MONTH FROM WA_YMD) = EXTRACT(MONTH FROM EA_OUTTIME)
+	</select>
+	
+	<select id="geteaOutTime2" parameterType="String" resultType="kr.or.oho.vo.AttendVO" >
+		SELECT ea_outTime
+		FROM (
+  			SELECT wa_no, ea_outTime
+  			FROM (
+    			SELECT wa_no, ea_outTime
+    			FROM work_attendence
+    			WHERE emp_no = #{empNo}
+    			ORDER BY wa_no DESC
+  			)
+  			WHERE ROWNUM <![CDATA[ < ]]> 1
+		)
+	</select>
+	
+	<select id="getWaYmd" parameterType="HashMap" resultType="kr.or.oho.vo.AttendVO" >
+		SELECT wa_ymd FROM work_attendence
+		WHERE wa_no = #{waNo}
+		AND emp_no = #{empNo}
+	</select>
+	
+	<select id="geteaOutTime" parameterType="HashMap" resultType="kr.or.oho.vo.AttendVO" >
+		SELECT ea_outTime FROM work_attendence
+		WHERE wa_no = #{waNo}
+		AND emp_no = #{empNo}
+	</select>
+	
+	<insert id="createPost" parameterType="kr.or.oho.vo.AttendVO">
+		<selectKey resultType="String" order="BEFORE" keyProperty="waNo">
+			SELECT NVL(SUBSTR(MAX(WA_NO),1,2) || TRIM(TO_CHAR(SUBSTR(MAX(WA_NO),4) + 1,'000')),'WA001')
+			FROM   WORK_ATTENDENCE
+		</selectKey>
+	
+		INSERT INTO WORK_ATTENDENCE
+		(
+			WA_NO
+			, WA_DT
+			<if test="gubun!='출근'">
+			, EA_OUTTIME	
+			</if>
+			, WA_STATUS
+			, EMP_NO
+			, BACK_COLOR
+		)
+		VALUES
+		(	
+			#{waNo}
+			,TO_DATE(#{waDt}, 'YYYY-MM-DD HH24:MI:SS')
+			<if test="gubun!='출근'">
+			,TO_DATE(#{eaOutTime}, 'YYYY-MM-DD HH24:MI:SS')
+			</if>
+			,#{waStatus}
+			,#{empNo}
+			,#{backColor}
+		)
+		
+	</insert>
+	
+	<update id="updatePost" parameterType="kr.or.oho.vo.AttendVO">
+
+
+			UPDATE WORK_ATTENDENCE
+			SET
+				WA_STATUS = 
+				<choose>
+            		<when test="waStatus == '지각'">
+                		'조퇴'
+            		</when>
+            		<otherwise>
+               			#{waStatus}
+            		</otherwise>
+        		</choose>
+				,BACK_COLOR = 
+				<choose>
+            		<when test="waStatus == '지각'">
+                		'#FF0000'
+            		</when>
+            		<otherwise>
+               			#{backColor}
+            		</otherwise>
+        		</choose>
+				<if test="gubun=='출근'">
+				,WA_DT = TO_DATE(#{waDt}, 'YYYY-MM-DD HH24:MI:SS')
+				</if>
+				,EA_OUTTIME = SYSDATE
+			WHERE
+				EMP_NO = #{empNo} 
+				AND WA_NO = #{waNo}
+				
+	</update>
+</mapper>

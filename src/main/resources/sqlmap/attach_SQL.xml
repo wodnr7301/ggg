@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.AttachMapper">
+
+	<insert id="insertAttach" parameterType="kr.or.oho.vo.AttachVO">
+		INSERT INTO ATCH_FILE(AF_GLOCD, AF_SEQ, AF_NM, AF_SZ, AF_EXTN_NM, AF_PSTDT)
+    	VALUES(#{afGlocd},#{afSeq},#{afNm},#{afSz}, #{afExtnNm}, SYSDATE)
+	</insert>
+	
+	<select id="getFileName" parameterType="String" resultType="kr.or.oho.vo.AttachVO">
+		SELECT A.AF_GLOCD, A.AF_SEQ, A.AF_NM, A.AF_SZ
+            , A.AF_EXTN_NM, A.AF_PSTDT
+		FROM   ATCH_FILE A
+		WHERE  A.AF_GLOCD = #{afGlocd}
+		AND A.AF_SEQ=(
+    		SELECT MIN(B.AF_SEQ)
+    		FROM ATCH_FILE A
+    		WHERE B.AF_GLOCD = A.AF_GLOCD
+		)
+	</select>
+	
+</mapper>

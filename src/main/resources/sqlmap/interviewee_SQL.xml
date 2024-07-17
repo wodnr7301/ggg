@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.IntervieweeMapper">
+	
+	<insert id="insertReserveFounder" parameterType="kr.or.oho.vo.ReserveFounderVO">
+		INSERT
+			INTO
+			RESERVE_FOUNDER
+		(RF_NO,
+			RF_EML_ADDR,
+			RF_NM,
+			RF_ZIP,
+			RF_ADDR,
+			RF_DADDR,
+			RF_TELNO,
+			RF_YMD,
+			RF_HLO,
+			FT_NO)
+		VALUES(
+		('REF'||NVL(TRIM(TO_CHAR((SELECT MAX(TO_NUMBER(SUBSTR(RF_NO ,4)))+1 FROM RESERVE_FOUNDER),'000')), TRIM((TO_CHAR(1,'000'))))),
+		#{rfEmlAddr},
+		#{rfNm},
+		#{rfZip},
+		#{rfAddr},
+		#{rfDaddr},
+		#{rfTelno},
+		#{rfYmd},
+		#{rfHlo},
+		#{ftNo})
+	</insert>
+	
+	<select id="getList" resultType="kr.or.oho.vo.IntervieweeVO">
+		SELECT
+			ITVEE_NO,
+			ITVEE_EML_ADDR,
+			ITVEE_NM,
+			ITVEE_ZIP,
+			ITVEE_ADDR,
+			ITVEE_DADDR,
+			ITVEE_TELNO,
+			ITVEE_GEN,
+			ITVEE_PROF_IMG
+		FROM
+			INTERVIEWEE
+	</select>
+	
+</mapper>

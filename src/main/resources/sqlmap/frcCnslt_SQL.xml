@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.FrcCnsltMapper">
+
+<resultMap type="kr.or.oho.vo.ReserveFounderVO" id="reserveFounderMap">
+	<result property="rfNo" column="RF_NO"/>
+	<result property="rfEmlAddr" column="RF_EML_ADDR"/>
+	<result property="rfNm" column="RF_NM"/>
+	<result property="rfZip" column="RF_ZIP"/>
+	<result property="rfAddr" column="RF_ADDR"/>
+	<result property="rfDaddr" column="RF_DADDR"/>
+	<result property="rfTelno" column="RF_TELNO"/>
+	<result property="rfYmd" column="RF_YMD"/>
+	<result property="rfHlo" column="RF_HLO"/>
+	<result property="ftNo" column="FT_NO"/>
+	<result property="comcdCdnm" column="COMCD_CDNM"/>
+	<association property="frcsTypeVO" resultMap="frcsTypeMap"></association>
+	<association property="itvBscInfoVO" resultMap="itvBscInfoMap"></association>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.FrcsTypeVO" id="frcsTypeMap">
+	<result property="ftNo" column="FT_NO"/>
+	<result property="ftNm" column="FT_NM"/>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.ItvBscInfoVO" id="itvBscInfoMap">
+	<result property="ibiNo" column="IBI_NO"/>
+	<result property="ibiYmd" column="IBI_YMD"/>
+	<result property="ibiPassYn" column="IBI_PASS_YN"/>
+	<result property="ibiSeCd" column="IBI_SE_CD"/>
+	<result property="ibiCon" column="IBI_CON"/>
+	<result property="itveeNo" column="ITVEE_NO"/>
+</resultMap>
+
+<select id="list" resultMap="reserveFounderMap" parameterType="String">
+	SELECT
+	    d.rf_no,
+	    d.rf_nm,
+	    d.rf_telno,
+	    e.ibi_no,
+	    e.ibi_ymd,
+	    e.ibi_pass_yn,
+	    f.ft_nm
+	FROM
+	    itv_bsc_info e
+	JOIN
+	    reserve_founder d
+	    ON d.rf_no = e.rf_no
+	JOIN
+	    frcs_type f
+	    ON d.ft_no = f.ft_no
+	JOIN
+	    (SELECT DISTINCT
+	         IBI_NO AS myibino
+	     FROM
+	         INTERVIEWER
+	     WHERE
+	         emp_no = #{empNo}
+	    ) a
+	    ON a.myibino = e.ibi_no
+	WHERE
+	    e.ibi_se_cd = '2'	<!-- 가맹 상담은 2 -->
+	    AND NOT EXISTS (	<!-- 상담 끝나고 등록 완료된 거는 포함하지 않게 -->
+	        SELECT 1
+	        FROM ctrt
+	        WHERE ctrt.rf_no = d.rf_no
+	    )
+	ORDER BY
+	    e.ibi_ymd
+</select>
+
+<select id="listCnt" resultType="int" parameterType="hashMap">
+	SELECT
+	    COUNT(e.ibi_no)
+	FROM
+	    itv_bsc_info e
+	JOIN
+	    reserve_founder d
+	    ON d.rf_no = e.rf_no
+	JOIN
+	    (SELECT DISTINCT
+	         IBI_NO AS myibino
+	     FROM
+	         INTERVIEWER
+	     WHERE
+	         emp_no = #{empNo}
+	    ) a
+	    ON a.myibino = e.ibi_no
+	WHERE
+	    e.ibi_se_cd = '2'
+		AND e.ibi_pass_yn = #{ibiPassYn}
+	    AND NOT EXISTS (
+	        SELECT 1
+	        FROM ctrt
+	        WHERE ctrt.rf_no = d.rf_no
+	    )
+</select>
+
+<select id="detail" resultMap="reserveFounderMap" parameterType="kr.or.oho.vo.ItvBscInfoVO">
+	SELECT
+	    d.rf_no
+	  , d.rf_eml_addr
+	  , d.rf_nm
+	  , d.rf_zip
+	  , d.rf_addr
+	  , d.rf_daddr
+	  , d.rf_telno
+	  , d.rf_ymd
+	  , d.rf_hlo
+	  , d.ft_no
+	  , f.ibi_no
+	  , f.ibi_ymd
+	  , f.ibi_pass_yn
+	  , f.ibi_se_cd
+	  , f.ibi_con
+	  , e.comcd_cdnm
+	  , c.ft_nm
+	FROM
+	    reserve_founder d
+	  , frcs_type       c
+	  , comcd           e
+	  , itv_bsc_info    f
+	WHERE
+	        c.ft_no = d.ft_no
+	    AND e.comcd_groupcd = d.rf_hlo
+	    AND d.rf_no = f.rf_no
+	    AND f.ibi_no = #{ibiNo}
+</select>
+
+<update id="update" parameterType="kr.or.oho.vo.ItvBscInfoVO">
+	UPDATE itv_bsc_info
+	SET
+	    ibi_pass_yn = #{ibiPassYn},
+	    ibi_con = #{ibiCon}
+	WHERE
+	    ibi_no = #{ibiNo}
+</update>
+
+<delete id="interviewerDelete" parameterType="kr.or.oho.vo.ItvBscInfoVO">
+	DELETE FROM interviewer
+	WHERE
+	    IBI_NO = #{ibiNo}
+</delete>
+
+<delete id="cancel" parameterType="kr.or.oho.vo.ItvBscInfoVO">
+	DELETE FROM itv_bsc_info
+	WHERE
+	        ibi_no = #{ibiNo}
+</delete>
+
+<select id="cnsltYList" resultMap="reserveFounderMap">
+	SELECT
+	    d.rf_no,
+	    d.rf_nm,
+	    f.ibi_ymd,
+	    e.comcd_cdnm,
+	    c.ft_nm
+	FROM
+	    reserve_founder d
+	JOIN
+	    frcs_type c ON c.ft_no = d.ft_no
+	JOIN
+	    comcd e ON e.comcd_groupcd = d.rf_hlo
+	JOIN
+	    itv_bsc_info f ON d.rf_no = f.rf_no
+	LEFT JOIN
+	    ctrt a ON a.rf_no = d.rf_no
+	WHERE
+	    f.ibi_se_cd = '2'
+	    AND f.ibi_pass_yn = 'Y'
+	    AND a.rf_no IS NULL
+</select>
+
+<select id="cnsltYOne" parameterType="kr.or.oho.vo.ReserveFounderVO" resultMap="reserveFounderMap">
+	SELECT
+	    d.rf_no
+	  , d.rf_eml_addr
+	  , d.rf_nm
+	  , d.rf_zip
+	  , d.rf_addr
+	  , d.rf_daddr
+	  , d.rf_telno
+	  , d.ft_no
+	  , f.ibi_ymd
+	  , e.comcd_cdnm
+	  , c.ft_nm
+	FROM
+	    reserve_founder d
+	  , frcs_type       c
+	  , comcd           e
+	  , itv_bsc_info    f
+	WHERE
+	        c.ft_no = d.ft_no
+	    AND e.comcd_groupcd = d.rf_hlo
+	    AND d.rf_no = f.rf_no
+	    AND f.ibi_se_cd = '2'
+	    AND f.ibi_pass_yn = 'Y'
+	    AND d.rf_no = #{rfNo}
+</select>
+
+</mapper>

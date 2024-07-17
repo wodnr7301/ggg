@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.AlarmMapper">
+	
+	<insert id="alarmCreate" parameterType="kr.or.oho.vo.AlarmVO">
+		INSERT
+			INTO
+			ALARM
+		(ALR_GLOCD,
+			ALR_SEQ,
+			ALR_SRC,
+			ALR_IDNTY,
+			ALR_INFO,
+			ALR_TM,
+			ALR_TG
+			<if test="alrSd != null and alrSd != ''">
+			,ALR_SD
+			</if>
+			)
+		VALUES(#{alrGlocd},
+		NVL((SELECT MAX(ALR_SEQ) FROM ALARM WHERE ALR_GLOCD = #{alrGlocd}), 0) + 1,
+		#{alrSrc},
+		'X',
+		#{alrInfo},
+		SYSDATE,
+		#{alrTg}
+		<if test="alrSd != null and alrSd != ''">
+		,#{alrSd}
+		</if>
+		)
+	</insert>
+	
+	<select id="header" parameterType="String" resultType="kr.or.oho.vo.AlarmVO">
+		SELECT
+			ALR_GLOCD,
+			ALR_SEQ,
+			ALR_SRC,
+			ALR_IDNTY,
+			ALR_INFO,
+			ALR_TM,
+			ALR_TG,
+			ALR_SD
+		FROM
+			ALARM
+		WHERE 
+			ALR_TG =#{empNo}
+			AND ALR_IDNTY ='X'
+		ORDER BY 
+			ALR_TM DESC
+	</select>
+	
+	<update id="updateY" parameterType="kr.or.oho.vo.AlarmVO">
+		UPDATE
+			ALARM
+		SET
+			ALR_IDNTY = 'Y'
+		WHERE
+			ALR_GLOCD = #{alrGlocd}
+			AND ALR_SEQ = #{alrSeq}
+	</update>
+	
+	<select id="getMaxEdu" resultType="String">
+		SELECT
+			max(EC_NO) EC_NO
+		FROM
+			EDN_CONDITION
+	</select>
+	
+	<select id="getEmpNo" parameterType="String" resultType="String">
+		SELECT
+			EMP_NO
+		FROM
+			FRANCHISE
+		WHERE 
+			FRCS_NO = #{frcsNo}
+	</select>
+	
+	<select id="getMax" resultType="String">
+		SELECT 
+			(SELECT MAX(EC_NO) FROM EDN_CONDITION)
+		FROM
+			DUAL
+	</select>
+	
+	<select id="getEduDetail" parameterType="String" resultType="kr.or.oho.vo.EdnCndtnVO">
+		SELECT
+		    a.EC_NO,
+		    a.EP_NO,
+		    a.FRCS_NO,
+		    a.EC_YMD,
+		    a.EC_YN,
+		    a.EC_BLANK,
+		    b.EP_NM
+		FROM
+		    EDN_CONDITION a
+		JOIN
+		    EDN_PRGRM b ON a.EP_NO = b.EP_NO
+		WHERE 
+		    a.EC_NO = #{ecNo}
+	</select>
+</mapper>

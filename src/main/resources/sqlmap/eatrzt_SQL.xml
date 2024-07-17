@@ -1,0 +1,489 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.EatrztMapper">
+
+<resultMap type="kr.or.oho.vo.EatrztVO" id="eatrztMap">
+	<result property="eatrztNo" column="EATRZT_NO"/>
+	<result property="empNo" column="EMP_NO"/>	
+	<result property="tmpltNo" column="TMPLT_NO"/>
+	<result property="eatrztTtl" column="EATRZT_TTL"/>
+	<result property="eatrztCn" column="EATRZT_CN" jdbcType="CLOB" javaType="java.lang.String" />
+	<result property="eatrztRepdt" column="EATRZT_REPDT"/>
+	<result property="eatrztAtrzdt" column="EATRZT_ATRZDT"/>
+	<result property="eatrztPrcsYn" column="EATRZT_PRCS_YN"/>
+	<result property="deptNo" column="DEPT_NO"/>
+	<result property="tmpltTtl" column="TMPLT_TTL"/>
+	<result property="deptNm" column="DEPT_NM"/>
+	<result property="comcdCdnm" column="COMCD_CDNM"/>
+	<result property="empNm" column="EMP_NM"/>
+	<result property="atrzlnNo" column="ATRZLN_NO"/>
+	<result property="atrzlnPro" column="ATRZLN_PRO"/>
+	<result property="atrzlnDt" column="ATRZLN_DT"/>
+	<association property="tmpltVO" resultMap="tmpltMap"></association>
+	<association property="employeeVO" resultMap="empMap"></association>
+	<association property="deptVO" resultMap="deptMap"></association>
+	<association property="atrzlnVO" resultMap="atrzlnMap"></association>
+	<collection property="attachVOList" resultMap="attachVOMap"></collection>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.AtrzlnVO" id="atrzlnMap">
+	<result property="atrzlnNo" column="ATRZLN_NO"/>
+	<result property="empNo" column="EMP_NO"/>
+	<result property="eatrztNo" column="EATRZT_NO"/>
+	<result property="atrzlnDt" column="ATRZLN_DT"/>
+	<result property="atrzlnPro" column="ATRZLN_PRO"/>
+</resultMap>
+
+
+<resultMap type="kr.or.oho.vo.AttachVO" id="attachVOMap">
+	<result property="afGlocd" column="AF_GLOCD"/>
+	<result property="afSeq" column="AF_SEQ"/>
+	<result property="afNm" column="AF_NM"/>
+	<result property="afSz" column="AF_SZ"/>
+	<result property="afExtnNm" column="AF_EXTN_NM"/>
+	<result property="afPstdt" column="AF_PSTDT"/>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.TmpltVO" id="tmpltMap">
+	<result property="tmpltNo" column="TMPLT_NO"/>
+	<result property="tmpltTtl" column="TMPLT_TTL"/>
+	<result property="tmpltCn" column="TMPLT_CN" jdbcType="CLOB" javaType="java.lang.String" />
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.EmployeeVO" id="empMap">
+	<result property="empNo" column="EMP_NO"/>
+	<result property="empNm" column="EMP_NM"/>
+	<result property="empBrdt" column="EMP_BRDT"/>
+	<result property="empEmlAddr" column="EMP_EML_ADDR"/>
+	<result property="empZip" column="EMP_ZIP"/>
+	<result property="empAddr" column="EMP_ADDR"/>
+	<result property="empDaddr" column="EMP_DADDR"/>
+	<result property="empTelno" column="EMP_TELNO"/>
+	<result property="empMrgYn" column="EMP_MRG_YN"/>
+	<result property="empAmt" column="EMP_AMT"/>
+	<result property="empImg" column="EMP_IMG"/>
+	<result property="empId" column="EMP_ID"/>
+	<result property="empPswd" column="EMP_PSWD"/>
+	<result property="empGen" column="EMP_GEN"/>
+	<result property="empEmpymd" column="EMP_EMPYMD"/>
+	<result property="empWhdwlYmd" column="EMP_WHDWL_YMD"/>
+	<result property="empJncmpYmd" column="EMP_JNCMP_YMD"/>
+	<result property="empActno" column="EMP_ACTNO"/>
+	<result property="empRv" column="EMP_RV"/>
+	<result property="enabled" column="ENABLED"/>
+	<result property="empJbgdNm" column="EMP_JBGD_NM"/>
+	<result property="empJbttlNm" column="EMP_JBTTL_NM"/>
+	<result property="empClsf" column="EMP_CLSF"/>
+	<result property="deptNo" column="DEPT_NO"/>
+	<result property="comcdCdnm" column="COMCD_CDNM"/>
+	<association property="deptVO" resultMap="deptMap"></association>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.DeptVO" id="deptMap">
+	<result property="deptNo" column="DEPT_NO"/>
+	<result property="deptNm" column="DEPT_NM"/>
+	<result property="deptTelno" column="DEPT_TELNO"/>
+</resultMap>
+
+<select id="nDocBoxList" parameterType="String" resultMap="eatrztMap">
+	SELECT
+	    e.eatrzt_no
+	  , e.eatrzt_ttl
+	  , e.eatrzt_repdt
+	  , t.tmplt_ttl
+	  , em.emp_nm
+	  , d.dept_nm
+	  , e.eatrzt_prcs_yn
+	  , a.atrzln_no
+	FROM
+	    eatrzt   e
+	    LEFT JOIN tmplt    t ON e.tmplt_no = t.tmplt_no
+	    LEFT JOIN employee em ON e.emp_no = em.emp_no
+	    LEFT JOIN dept     d ON e.dept_no = d.dept_no
+	    LEFT JOIN atrzln   a ON e.eatrzt_no = a.eatrzt_no
+	WHERE
+	        em.emp_no = #{empNo}
+	    AND em.emp_no = a.emp_no
+	    AND e.eatrzt_deltdt IS NULL
+	    AND e.eatrzt_prcs_yn = 'N'
+	ORDER BY
+	    eatrzt_no DESC
+</select>
+
+<select id="docBoxList" parameterType="String" resultMap="eatrztMap">
+	SELECT
+	    e.eatrzt_no
+	  , e.eatrzt_ttl
+	  , e.eatrzt_repdt
+	  , t.tmplt_ttl
+	  , em.emp_nm
+	  , d.dept_nm
+	  , e.eatrzt_prcs_yn
+	  , a.atrzln_no
+	FROM
+	    eatrzt   e
+	    LEFT JOIN tmplt    t ON e.tmplt_no = t.tmplt_no
+	    LEFT JOIN employee em ON e.emp_no = em.emp_no
+	    LEFT JOIN dept     d ON e.dept_no = d.dept_no
+	    LEFT JOIN atrzln   a ON e.eatrzt_no = a.eatrzt_no
+	WHERE
+	        em.emp_no = #{empNo}
+	    AND em.emp_no = a.emp_no
+	    AND e.eatrzt_deltdt IS NULL
+	ORDER BY
+	    eatrzt_no DESC
+</select>
+
+<select id="beforeApvBoxList" resultMap="eatrztMap" parameterType="String">
+	SELECT e.eatrzt_no
+              , e.eatrzt_ttl
+              , e.eatrzt_repdt
+              , t.tmplt_ttl
+              , em.emp_nm
+              , FN_DEPT_NM(e.dept_no) dept_nm
+              , e.eatrzt_prcs_yn
+              , la.atrzln_no
+	FROM eatrzt   e LEFT JOIN tmplt    t ON(e.tmplt_no = t.tmplt_no)
+                    LEFT JOIN employee em ON(e.emp_no = em.emp_no)
+                    LEFT JOIN atrzln   la ON(e.eatrzt_no = la.eatrzt_no AND la.emp_no = #{empNo})
+                    INNER JOIN (SELECT eatrzt_no , MIN(atrzln_pro) atrzln_pro
+                               FROM atrzln
+                               WHERE atrzln_dt IS NULL
+                               GROUP BY eatrzt_no)  lb ON(la.eatrzt_no = lb.eatrzt_no AND la.atrzln_pro = lb.atrzln_pro)
+	WHERE e.eatrzt_prcs_yn != 'N'
+	ORDER BY eatrzt_no DESC
+</select>
+<!-- 로그인 한 직원의 결재 리스트 
+/eatrzt/apvBoxList
+-->
+<select id="apvBoxList" resultMap="eatrztMap" parameterType="String">
+	select e.eatrzt_no
+			, e.eatrzt_ttl
+			, e.eatrzt_repdt
+	        , t.tmplt_ttl
+	        , (select em.emp_nm from employee em where em.emp_no = e.emp_no) emp_nm
+	        , FN_DEPT_NM(e.dept_no) dept_nm
+			, e.eatrzt_prcs_yn
+	        , a.atrzln_no
+	from   atrzln a INNER JOIN eatrzt e ON(a.EATRZT_NO = e.EATRZT_NO)
+	                             left outer join tmplt t on(e.tmplt_no = t.tmplt_no)
+	where   a.atrzln_dt is not null
+	and     a.emp_no =  #{empNo}
+	and 	a.atrzln_pro != 0
+	order by e.eatrzt_no desc		
+</select>
+
+<select id="nApvBoxList" resultMap="eatrztMap" parameterType="String">
+	SELECT
+	    e.eatrzt_no
+	  , e.eatrzt_ttl
+	  , e.eatrzt_repdt
+	  , t.tmplt_ttl
+	  , (
+	        SELECT
+	            em.emp_nm
+	        FROM
+	            employee em
+	        WHERE
+	            em.emp_no = e.emp_no
+	    )                     emp_nm
+	  , fn_dept_nm(e.dept_no) dept_nm
+	  , e.eatrzt_prcs_yn
+	  , a.atrzln_no
+	FROM
+	         atrzln a
+	    INNER JOIN eatrzt e ON ( a.eatrzt_no = e.eatrzt_no )
+	    LEFT OUTER JOIN tmplt  t ON ( e.tmplt_no = t.tmplt_no )
+	WHERE
+	        a.emp_no = #{empNo}
+	    AND e.eatrzt_prcs_yn = 'N'
+	ORDER BY
+	    e.eatrzt_no DESC		
+</select>
+
+<select id="createPost" parameterType="kr.or.oho.vo.TmpltVO" resultMap="tmpltMap">
+	SELECT
+    	TMPLT_NO
+  		, TMPLT_TTL
+  		, TMPLT_CN
+	FROM
+    	tmplt
+		where tmplt_no = #{tmpltNo}
+</select>
+
+<select id="tmpltList" resultType="kr.or.oho.vo.TmpltVO">
+	SELECT
+    	TMPLT_NO
+  		, TMPLT_TTL
+	FROM
+    	tmplt
+</select>
+
+<select id="getName" resultMap="empMap">
+	SELECT
+		e.emp_no,
+		e.emp_nm,
+		c.comcd_cdnm,
+		d.dept_nm
+	FROM employee e LEFT JOIN dept d
+		ON e.dept_no = d.dept_no
+	LEFT JOIN comcd c
+		ON e.emp_jbgd_nm = c.comcd_groupcd
+</select>
+
+<!-- public EmployeeVO comList(String empId); -->
+<select id="comList" parameterType="String" resultType="kr.or.oho.vo.EatrztVO">
+	SELECT
+	    b.emp_no,
+	    b.emp_nm,
+	    c.dept_nm,
+	    a.comcd_cdnm,
+	    (SELECT NVL(SUBSTR(MAX(eatrzt_no), 1, 1) || TRIM(TO_CHAR(SUBSTR(MAX(eatrzt_no), 2) + 1, '000')), 'D001') FROM eatrzt) AS eatrzt_no,
+	     SYSDATE as eatrzt_repdt
+	FROM
+    	employee b
+	JOIN
+    	comcd a ON a.comcd_groupcd = b.emp_jbgd_nm
+	JOIN
+    	dept c ON c.dept_no = b.dept_no
+	WHERE
+    	b.emp_no = #{empNo}
+</select>
+
+<insert id="eatrztPost" parameterType="kr.or.oho.vo.EatrztVO">
+    <selectKey resultType="String" order="BEFORE" keyProperty="eatrztNo">
+        SELECT NVL(SUBSTR(MAX(eatrzt_no), 1, 1) || TRIM(TO_CHAR(SUBSTR(MAX(eatrzt_no), 2) + 1, '000')), 'D001') 
+        FROM eatrzt
+    </selectKey>
+
+    INSERT INTO EATRZT (
+        EATRZT_NO, EMP_NO, DEPT_NO, TMPLT_NO, EATRZT_TTL, EATRZT_CN, EATRZT_REPDT, EATRZT_ATRZDT, EATRZT_PRCS_YN
+    )
+    SELECT
+        #{eatrztNo},
+        em.emp_no,
+        e.dept_no,
+        #{tmpltNo},
+        #{eatrztTtl},
+        #{eatrztCn,jdbcType=CLOB},
+        SYSDATE,
+        NULL,
+        'I'
+    FROM
+        employee em
+    JOIN
+        dept e ON em.dept_no = e.dept_no
+    WHERE
+        em.emp_no = (SELECT y.emp_no FROM employee y WHERE y.emp_id = #{empId})
+    AND ROWNUM = 1
+</insert>
+
+<!-- 결재자 리스트 -->
+<select id="atrzlnList" resultType="hashMap">
+	SELECT
+		ROWNUM as rnum
+		, emp_nm
+		,(select c.comcd_cdnm from comcd c where c.comcd_groupcd = e.emp_jbgd_nm
+		) as comcd_cdnm
+		,(select d.dept_nm from dept d where d.dept_no = e.dept_no) as dept_nm
+	FROM
+		(select emp_nm, emp_jbgd_nm, dept_no from employee e
+		order by emp_nm) e
+</select>
+
+<select id="getEatrzt" parameterType="kr.or.oho.vo.EatrztVO" resultMap="eatrztMap">
+	select
+		e.eatrzt_no
+		, em.emp_no
+		, em.emp_nm
+		, (select d.dept_nm from dept d where d.dept_no = e.dept_no) as dept_nm
+		, (select c.comcd_cdnm from comcd c where c.comcd_groupcd = em.emp_jbgd_nm) as comcd_cdnm
+		, e.eatrzt_repdt
+		, e.eatrzt_ttl
+		, e.eatrzt_cn
+		, t.tmplt_no
+		, t.tmplt_ttl
+        , a. atrzln_no
+        , a. atrzln_dt
+        , e.eatrzt_prcs_yn
+	from eatrzt e LEFT OUTER JOIN tmplt t ON(e.tmplt_no = t.tmplt_no)
+								LEFT OUTER JOIN employee em ON(e.emp_no = em.emp_no)
+                                 LEFT JOIN atrzln   a ON(e.eatrzt_no = a.eatrzt_no)
+	where atrzln_no = #{atrzlnNo}
+</select>
+
+<select id="attachList" parameterType="kr.or.oho.vo.EatrztVO" resultType="kr.or.oho.vo.AttachVO">
+	SELECT
+		af_glocd
+		, af_seq
+		, af_nm
+		, af_sz
+	FROM atch_file
+	WHERE af_glocd = #{eatrztNo}
+</select>
+
+<!-- 기안자 결재선 -->
+<insert id="atrzlnPost" parameterType="kr.or.oho.vo.AtrzlnVO">
+	<selectKey resultType="String" order="BEFORE" keyProperty="atrzlnNo">
+		select nvl(substr(max(atrzln_no),1,1) || trim(to_char(substr(max(atrzln_no),2)+1,'000')),'A001') 
+		from    atrzln
+	</selectKey>
+
+	insert into atrzln(ATRZLN_NO, EMP_NO, EATRZT_NO, ATRZLN_DT, ATRZLN_PRO)
+	values(#{atrzlnNo}, #{empNo}, #{eatrztNo}, SYSDATE, #{atrzlnPro})
+</insert>
+	
+<!-- 결재자 결재선 -->	
+<insert id="atrzlnPost2" parameterType="kr.or.oho.vo.AtrzlnVO">
+	<selectKey resultType="String" order="BEFORE" keyProperty="atrzlnNo">
+		select nvl(substr(max(atrzln_no),1,1) || trim(to_char(substr(max(atrzln_no),2)+1,'000')),'A001') 
+		from    atrzln
+	</selectKey>
+
+	insert into atrzln(ATRZLN_NO, EMP_NO, EATRZT_NO, ATRZLN_PRO)
+	values(#{atrzlnNo}, #{empNo}, #{eatrztNo}, #{atrzlnPro})
+</insert>
+
+<update id="atrUpdatePost" parameterType="kr.or.oho.vo.AtrzlnVO">
+	UPDATE atrzln
+	SET
+    	atrzln_dt = sysdate
+	WHERE
+		atrzln_no = #{atrzlnNo}	
+</update>
+
+<select id="checkFinalApproval" parameterType="String" resultType="int">
+    SELECT ATRZLN_PRO
+    FROM atrzln
+    WHERE atrzln_no = #{atrzlnNo}
+</select>
+
+<update id="updateEatrztAfterApproval" parameterType="String">
+    UPDATE eatrzt
+    SET eatrzt_atrzdt = sysdate, eatrzt_prcs_yn = 'Y'
+    WHERE eatrzt_no = #{eatrztNo}
+</update>
+
+<select id="finalApprovalValue" parameterType="String" resultType="int">
+	SELECT
+	    COUNT(b.atrzln_no) - 1
+	FROM
+	    atrzln b
+	  , eatrzt a
+	WHERE
+	        a.eatrzt_no = b.eatrzt_no
+	    AND a.eatrzt_no = #{eatrztNo}
+</select>
+
+<select id="check" parameterType="kr.or.oho.vo.AtrzlnVO" resultType="kr.or.oho.vo.AtrzlnVO">
+	SELECT
+    atrzln_no
+  , emp_no
+  , eatrzt_no
+  , atrzln_dt
+  , atrzln_pro
+FROM
+    atrzln
+WHERE
+    eatrzt_no = #{eatrztNo}
+AND    
+    EMP_NO = #{empNo}
+</select>
+
+<update id="eatrztUpdate" parameterType="kr.or.oho.vo.EatrztVO">
+	UPDATE eatrzt
+	SET eatrzt_prcs_yn = 'N'
+	WHERE eatrzt_no = #{eatrztNo}
+</update>
+
+<update id="atrzlnUpdate" parameterType="String">
+	UPDATE atrzln
+	SET 
+		atrzln_dt = NULL
+	WHERE
+		 eatrzt_no = #{eatrztNo}
+</update>
+
+<update id="delUpdate" parameterType="kr.or.oho.vo.EatrztVO">
+	UPDATE eatrzt
+	SET
+	    eatrzt_deltdt = sysdate
+	WHERE
+	    eatrzt_no = #{eatrztNo}
+</update>
+
+<select id="stampAtrList" parameterType="kr.or.oho.vo.EatrztVO" resultType="kr.or.oho.vo.AtrzlnVO">
+	SELECT
+	    atrzln_no
+	  , emp_no
+	  , eatrzt_no
+	  , atrzln_dt
+	  , atrzln_pro
+	FROM
+	    atrzln
+	WHERE eatrzt_no = #{eatrztNo}
+	ORDER BY
+    atrzln_pro ASC
+</select>
+
+<select id="stampAtrList2" parameterType="kr.or.oho.vo.EatrztVO" resultMap="eatrztMap">
+	SELECT
+	    g.atrzln_no
+	  , g.atrzln_dt
+	  , g.atrzln_pro
+	  , g.emp_no
+	  , g.eatrzt_no
+	  , e.eatrzt_prcs_yn
+	  , h.comcd_cdnm
+	FROM
+	    atrzln   g
+	    LEFT OUTER JOIN employee f ON ( g.emp_no = f.emp_no )
+	    LEFT OUTER JOIN comcd    h ON ( h.comcd_groupcd = f.emp_jbgd_nm )
+	    LEFT OUTER JOIN eatrzt   e ON ( e.eatrzt_no = g.eatrzt_no )
+	WHERE
+	        g.eatrzt_no = #{eatrztNo}
+	ORDER BY
+	    g.atrzln_pro ASC
+</select>
+
+<!-- 현재 전자결재문서의 서식번호가 연차관련서식 번호랑 똑같은 것만 select -->
+<select id="checkHldyTmplt" parameterType="kr.or.oho.vo.AtrzlnVO" resultType="int">
+	SELECT
+	    COUNT(b.eatrzt_no)
+	FROM
+	    eatrzt b
+	  , tmplt  a
+	  , atrzln c
+	WHERE
+	        a.tmplt_no = b.tmplt_no
+	    AND c.eatrzt_no = b.eatrzt_no
+	    AND c.atrzln_no = #{atrzlnNo}
+	    AND b.tmplt_no IN ( '1', '4', '5', '6' )
+</select>
+
+<insert id="hldyInsert" parameterType="kr.or.oho.vo.HldyMngLdgrVO">
+	<selectKey resultType="String" order="BEFORE" keyProperty="hmlNo">
+		SELECT NVL(SUBSTR(MAX(hml_no), 1, 3) || TRIM(TO_CHAR(TO_NUMBER(SUBSTR(MAX(hml_no), 4)) + 1, '000')), 'HML001')
+	    FROM hldy_mng_ldgr
+	</selectKey>
+	INSERT INTO hldy_mng_ldgr (
+	    hml_no,
+	    emp_no,
+	    hs_no,
+	    hml_use_dt,
+	    hml_end_dt,
+	    hml_td,
+	    hml_rsn,
+	    eatrzt_no
+	) VALUES (
+	    #{hmlNo},
+	    #{empNo},
+	    #{hsNo},
+	    #{hmlUseDt},
+	    #{hmlEndDt},
+	    TO_DATE(#{hmlEndDt}, 'YYYY-MM-DD') - TO_DATE(#{hmlUseDt},'YYYY-MM-DD'),
+	    #{hmlRsn}, 
+	    #{eatrztNo}
+	)
+</insert>
+</mapper>

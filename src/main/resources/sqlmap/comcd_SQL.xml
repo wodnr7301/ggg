@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.ComcdMapper">
+
+<select id="regionSelect" resultType="kr.or.oho.vo.ComcdVO">
+	SELECT
+	    comcd_groupcd
+	  , comcd_cdnm
+	  , comcd_one
+	FROM
+	    comcd
+	WHERE
+	    comcd_cdnmcom_gc = 'D1'
+	AND comcd_use_yn = 'Y'
+</select>
+
+</mapper>

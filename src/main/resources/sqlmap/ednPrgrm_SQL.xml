@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.EdnPrgrmMapper">
+
+<select id="list" resultType="kr.or.oho.vo.EdnPrgrmVO">
+	SELECT
+	    ep_no
+	  , ep_nm
+	  , ep_tm
+	  , ep_esntl_yn
+	  , ep_plc_nm
+	  , ep_content
+	FROM
+	    edn_prgrm
+	ORDER BY
+		ep_nm
+</select>
+
+<insert id="add" parameterType="kr.or.oho.vo.EdnPrgrmVO">
+	<selectKey resultType="String" order="BEFORE" keyProperty="epNo">
+		SELECT DISTINCT
+		    'EDP'||TRIM(TO_CHAR((SELECT NVL(MAX(TO_NUMBER(SUBSTR(EP_NO,4))),0)+1 FROM EDN_PRGRM),'000'))
+		FROM
+		    DUAL
+	</selectKey>
+	INSERT INTO edn_prgrm (
+	    ep_no
+	    , ep_nm
+	    , ep_tm
+	    , ep_esntl_yn
+	  <if test="epPlcNm != null and epPlcNm != ''">
+    	, ep_plc_nm
+	  </if>
+	) VALUES (
+	    #{epNo}
+	  , #{epNm}
+	  , #{epTm}
+	  , #{epEsntlYn}
+	  <if test="epPlcNm != null and epPlcNm != ''">
+	  , #{epPlcNm}
+	  </if>
+	)
+</insert>
+
+<update id="update" parameterType="kr.or.oho.vo.EdnPrgrmVO">
+	UPDATE edn_prgrm
+	SET
+	    EP_NM = #{epNm}
+	  , EP_TM = #{epTm}
+	  , EP_ESNTL_YN = #{epEsntlYn}
+	  <if test="epPlcNm != null and epPlcNm != ''">
+	  , EP_PLC_NM = #{epPlcNm}
+	  </if>
+	WHERE
+	        ep_no = #{epNo}
+</update>
+
+<delete id="delete" parameterType="kr.or.oho.vo.EdnPrgrmVO">
+	DELETE FROM edn_prgrm
+	WHERE
+	        ep_no = #{epNo}
+</delete>
+
+<select id="getEpNmList" resultType="kr.or.oho.vo.EdnPrgrmVO">
+	SELECT
+	    CASE
+	        WHEN ep_nm1 IN ('24년도 신규가맹점 개인정보 보호 교육',
+	                        '24년도 신규가맹점 산업 안전 보건 교육',
+	                        '24년도 신규가맹점 성희롱 예방 교육',
+	                        '24년도 신규가맹점 장애인 인식개선 교육',
+	                        '24년도 신규가맹점 직장 내 괴롭힘 예방 교육') THEN ep_nm1
+	        ELSE '기타 교육'
+	    END AS ep_nm1,
+	    COUNT(ep_no) AS epNm1Count
+	FROM
+	    v_edn_prgrm
+	GROUP BY
+	    CASE
+	        WHEN ep_nm1 IN ('24년도 신규가맹점 개인정보 보호 교육',
+	                        '24년도 신규가맹점 산업 안전 보건 교육',
+	                        '24년도 신규가맹점 성희롱 예방 교육',
+	                        '24년도 신규가맹점 장애인 인식개선 교육',
+	                        '24년도 신규가맹점 직장 내 괴롭힘 예방 교육') THEN ep_nm1
+	        ELSE '기타 교육'
+	    END
+	ORDER BY
+	    ep_nm1
+</select>
+
+<select id="getEpNmDetailList" parameterType="kr.or.oho.vo.EdnPrgrmVO" resultType="kr.or.oho.vo.EdnPrgrmVO">
+	SELECT
+	    ep_no
+	  , ep_nm
+	  , ep_nm1
+	  , ep_nm2
+	  , ep_nm3
+	FROM
+	    v_edn_prgrm
+	WHERE
+	 	<if test="epNm1 != 'etc'">
+	    ep_nm1 = #{epNm1}
+	    </if>
+		<if test="epNm1 == 'etc'">
+    	ep_nm1 NOT IN ('24년도 신규가맹점 개인정보 보호 교육',
+                        '24년도 신규가맹점 산업 안전 보건 교육',
+                        '24년도 신규가맹점 성희롱 예방 교육',
+                        '24년도 신규가맹점 장애인 인식개선 교육',
+                        '24년도 신규가맹점 직장 내 괴롭힘 예방 교육')
+	    </if>   
+	ORDER BY
+	    ep_nm2
+</select>
+
+</mapper>

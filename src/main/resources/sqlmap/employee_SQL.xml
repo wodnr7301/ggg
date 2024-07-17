@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.EmpRegisterMapper">
+
+	<select id="maxEmpNo" resultType="String">
+		SELECT MAX(EMP_NO)
+		FROM EMPLOYEE
+   	</select>
+   	
+   	<select id="empNoId" resultType="String">
+	SELECT DISTINCT
+	    'EMP'||TRIM(TO_CHAR((SELECT NVL(MAX(TO_NUMBER(SUBSTR(EMP_NO,4))),0)+1 FROM EMPLOYEE),'000'))
+	FROM
+	    DUAL
+	</select>
+   	
+	<insert id="createPost" parameterType="kr.or.oho.vo.EmployeeVO">
+		INSERT INTO EMPLOYEE
+			( 
+			  EMP_NO
+			, EMP_NM
+			, EMP_BRDT
+			, EMP_EML_ADDR
+			, EMP_ZIP
+			, EMP_ADDR
+			, EMP_DADDR
+			, EMP_TELNO
+			, EMP_MRG_YN
+			, EMP_AMT
+			, EMP_ID
+			, EMP_PSWD
+			, EMP_GEN
+			, EMP_JNCMP_YMD
+			, EMP_ACTNO
+			, EMP_RV
+			, EMP_JBGD_NM
+			, EMP_JBTTL_NM
+			, DEPT_NO
+			, EMP_CLSF
+			)
+		VALUES (
+			  #{empNo}
+			, #{empNm}
+			, #{empBrdt}
+			, #{empEmlAddr}
+			, #{empZip}
+			, #{empAddr}
+			, #{empDaddr}
+			, #{empTelno}
+			, #{empMrgYn, jdbcType=VARCHAR}
+			, #{empAmt}
+			, ('EMP'||NVL(TRIM(TO_CHAR((SELECT MAX(TO_NUMBER(SUBSTR(EMP_NO,4)))+1 FROM EMPLOYEE),'000')), 
+				TRIM((TO_CHAR(1,'000')))))
+			, #{empPswd}
+			, #{empGen, jdbcType=VARCHAR}
+			, #{empJncmpYmd}
+			, #{empActno}
+			, #{empRv}
+			, #{empJbgdNm}
+			, #{empJbttlNm}
+			, #{deptNo}
+			, 'A301'
+		)
+	</insert>
+	
+	<select id="empList" resultType="kr.or.oho.vo.EmployeeVO">
+		SELECT 
+			  EMP_NO
+			, EMP_NM
+			, EMP_ADDR
+			, EMP_DADDR
+			, EMP_TELNO
+			, EMP_CLSF
+			, ENABLED
+		FROM EMPLOYEE
+		WHERE ENABLED = '1'
+		ORDER BY EMP_NO DESC 
+	</select>
+	
+	<select id="empDetail" parameterType="kr.or.oho.vo.EmployeeVO" resultType="kr.or.oho.vo.EmployeeVO">
+		SELECT
+			  EMP_NO 
+			, EMP_NM
+			, EMP_GEN
+			, EMP_MRG_YN
+			, EMP_EMPYMD
+			, EMP_JNCMP_YMD
+			, EMP_ACTNO
+			, EMP_JBGD_NM
+			, EMP_JBTTL_NM
+			, DEPT_NO
+			FROM EMPLOYEE
+		WHERE EMP_NO = #{empNo}
+			</select>
+	
+	<update id="updateEmployee" parameterType="kr.or.oho.vo.EmployeeVO">
+	    UPDATE EMPLOYEE 
+	    SET 
+	        EMP_NM = #{empNm}
+	        , EMP_ZIP = #{empZip}
+	        , EMP_ADDR = #{empAddr}
+	        , EMP_DADDR = #{empDaddr}
+	        , EMP_TELNO = #{empTelno}
+	        , EMP_MRG_YN = #{empMrgYn}
+	        , EMP_JNCMP_YMD = #{empJncmpYmd}
+	        , EMP_ACTNO = #{empActno}
+	        , EMP_JBGD_NM = #{empJbgdNm, jdbcType=VARCHAR}
+	        , EMP_JBTTL_NM = #{empJbttlNm, jdbcType=VARCHAR}
+	        , DEPT_NO = #{deptNo, jdbcType=VARCHAR}
+	    WHERE 
+	        EMP_NO = #{empNo}
+	</update>
+
+	<resultMap type="kr.or.oho.vo.EmployeeVO" id="empMap">
+		<result property="empNo" column="EMP_NO"/>
+		<result property="empNm" column="EMP_NM"/>
+		<result property="empBrdt" column="EMP_BRDT"/>
+		<result property="empEmlAddr" column="EMP_EML_ADDR"/>
+		<result property="empZip" column="EMP_ZIP"/>
+		<result property="empAddr" column="EMP_ADDR"/>
+		<result property="empDaddr" column="EMP_DADDR"/>
+		<result property="empTelno" column="EMP_TELNO"/>
+		<result property="empMrgYn" column="EMP_MRG_YN"/>
+		<result property="empAmt" column="EMP_AMT"/>
+		<result property="empImg" column="EMP_IMG"/>
+		<result property="empId" column="EMP_ID"/>
+		<result property="empPswd" column="EMP_PSWD"/>
+		<result property="empGen" column="EMP_GEN"/>
+		<result property="empEmpymd" column="EMP_EMPYMD"/>
+		<result property="empWhdwlYmd" column="EMP_WHDWL_YMD"/>
+		<result property="empJncmpYmd" column="EMP_JNCMP_YMD"/>
+		<result property="empActno" column="EMP_ACTNO"/>
+		<result property="empRv" column="EMP_RV"/>
+		<result property="enabled" column="ENABLED"/>
+		<result property="empJbgdNm" column="EMP_JBGD_NM"/>
+		<result property="empJbttlNm" column="EMP_JBTTL_NM"/>
+		<result property="empClsf" column="EMP_CLSF"/>
+		<result property="deptNo" column="DEPT_NO"/>
+	</resultMap>
+	
+	<select id="getEmployeeInfo" resultMap="empMap" parameterType="String">
+		SELECT
+		    EMP_NO
+		,   EMP_NM
+		,   EMP_ZIP
+		,   EMP_ADDR
+		,   EMP_DADDR
+		,   EMP_TELNO
+		,   EMP_MRG_YN
+		,   EMP_JNCMP_YMD
+		,   EMP_ACTNO
+		,   EMP_JBGD_NM
+		,   EMP_JBTTL_NM
+		,   DEPT_NO
+		FROM 
+			EMPLOYEE
+		WHERE 
+			EMP_NO = #{empNo}
+	</select>
+	
+	<update id="deleteEmp" parameterType="kr.or.oho.vo.EmployeeVO">
+	 UPDATE 
+	 	EMPLOYEE
+     SET 
+     	ENABLED = '0'
+     WHERE 
+     	EMP_NO = #{empNo}
+</update>
+</mapper>

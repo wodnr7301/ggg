@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.DownloadMapper">
+	
+	<select id="getAttachVOList" parameterType="kr.or.oho.vo.AttachVO" resultType="kr.or.oho.vo.AttachVO">
+		SELECT
+			AF_GLOCD,
+			AF_SEQ,
+			AF_NM,
+			AF_SZ,
+			AF_EXTN_NM,
+			AF_PSTDT
+		FROM
+			ATCH_FILE
+		WHERE 
+			AF_GLOCD =#{afGlocd}
+		AND
+			AF_SEQ =#{afSeq}
+	</select>
+	
+</mapper>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.MtgRoomMapper">
+
+	<resultMap type="kr.or.oho.vo.MtgRoomVO" id="mtgRoomMap">
+		<result property="mtgrNo" column="MTGR_NO"/>
+		<result property="mtgrUseYN" column="MTGR_USE_YN"/>
+	</resultMap>
+	
+	<resultMap type="kr.or.oho.vo.MtgrMngLdgrVO" id="mtgrMngLdgrMap">
+		<result property="mmlNo" column="MML_NO"/>
+		<result property="mmlUsePrps" column="MML_USE_PRPS"/>
+		<result property="mmlRsvtYN" column="MML_RSVT_YN"/>
+		<result property="mmlRsvtYmd" column="MML_RSVT_YMD"/>
+		<result property="mmlRsvtStrdt" column="MML_RSVT_STRDT"/>
+		<result property="mmlRsvtEnddt" column="MML_RSVT_ENDDT"/>
+		<result property="mtgrNo" column="MTGR_NO"/>
+		<result property="mtgrUseYN" column="MTGR_USE_YN"/>
+		<result property="empNo" column="EMP_NO"/>
+		<result property="empNm" column="EMP_NM"/>
+	</resultMap>
+	
+	<select id="getMtgRoomAjax" resultMap="mtgRoomMap">
+
+		SELECT
+			mtgr_no
+			, mtgr_use_yn
+		FROM
+			mtg_room
+
+	</select>
+	
+<!-- 	<select id="getMmlRsvtYNAjax" resultMap="mtgRoomMap"> -->
+
+<!-- 		SELECT -->
+<!-- 			mtgr_no -->
+<!-- 			, mtgr_use_yn -->
+<!-- 		FROM -->
+<!-- 			mtg_room -->
+
+<!-- 	</select>       -->
+	
+	<select id="listAjax" resultMap="mtgrMngLdgrMap">
+		SELECT
+			mml_no
+			, mml_rsvt_yn
+			, mml_rsvt_ymd
+			, mml_rsvt_strdt
+			, mml_rsvt_enddt
+			, mtgr_no
+			, emp_no
+			, mml_use_prps
+		FROM
+			mtgr_mng_ldgr
+<!-- 		WHERE	 -->
+<!-- 			emp_no = #{empNo} -->
+	</select>
+	
+	<select id="getMtgRoomDetail" parameterType="kr.or.oho.vo.MtgrMngLdgrVO" resultMap="mtgrMngLdgrMap">
+		SELECT
+			a.mml_no
+			, a.mml_rsvt_yn
+			, a.mml_rsvt_ymd
+			, a.mml_rsvt_strdt
+			, a.mml_rsvt_enddt
+			, a.mtgr_no
+			, a.emp_no
+			, a.mml_use_prps
+            , (select b.mtgr_use_yn from mtg_room b where b.mtgr_no = a.mtgr_no) mtgr_use_yn
+            , (select c.emp_nm from employee c where a.emp_no = c.emp_no) emp_nm
+		FROM
+			mtgr_mng_ldgr a
+		WHERE	
+            a.mml_no = #{mmlNo}
+	</select>
+	
+	<select id="getMmlNo" resultType="String">
+		SELECT mml_no FROM mtgr_mng_ldgr
+	</select>
+	
+	<select id="getEmp2" parameterType="HashMap" resultType="String">
+		SELECT emp_no 
+		FROM mtgr_mng_ldgr
+		Where mml_no=#{mmlNo}
+	</select>
+	
+	<insert id="createAjax" parameterType="kr.or.oho.vo.MtgrMngLdgrVO">
+		<selectKey resultType="String" order="BEFORE" keyProperty="mmlNo">
+			SELECT NVL(SUBSTR(MAX(MML_NO),1,3) || TRIM(TO_CHAR(SUBSTR(MAX(MML_NO),4) + 1,'000')),'MML001')
+			FROM   MTGR_MNG_LDGR
+		</selectKey>
+		INSERT INTO MTGR_MNG_LDGR
+		(
+		MML_NO
+		, MML_RSVT_YN
+		, MML_USE_PRPS
+		, MML_RSVT_STRDT
+		, MML_RSVT_ENDDT
+		, MTGR_NO
+		, EMP_NO
+		)
+		VALUES
+		(
+		#{mmlNo}
+		,#{mmlRsvtYN}
+		,#{mmlUsePrps}
+		,#{mmlRsvtStrdt}
+		,#{mmlRsvtEnddt}
+		,#{mtgrNo}
+		,#{empNo}
+		)
+	</insert>
+	
+	<update id="updateAjax" parameterType="kr.or.oho.vo.MtgrMngLdgrVO">
+		UPDATE MTG_ROOM
+		SET
+    		MTGR_USE_YN='B101'
+		WHERE 
+			MTGR_NO=#{mtgrNo}
+	</update>
+	
+	<delete id="deleteAjax" parameterType="kr.or.oho.vo.MtgrMngLdgrVO">
+		DELETE FROM MTGR_MNG_LDGR
+		WHERE 
+			MML_NO=#{mmlNo}
+		AND
+			EMP_NO=#{empNo}
+	</delete>
+	
+	
+
+</mapper>

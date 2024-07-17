@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.DeptMapper">
+	
+	<select id="getDept" resultType="kr.or.oho.vo.JsTreeVO">
+		SELECT
+		    DEPT_NO AS id,
+		    DEPT_NM AS text,
+		    '#' AS parent,
+		    'fas fa-briefcase' AS icon
+		FROM
+		    DEPT
+	</select>
+	
+	<select id="getEmp" resultType="kr.or.oho.vo.JsTreeVO">
+	    SELECT
+		    (b.EMP_NM || ' ' || a.COMCD_CDNM) AS TEXT,
+		    b.EMP_NO AS ID,
+		    CASE
+		        WHEN b.DEPT_NO IS NOT NULL THEN b.DEPT_NO
+		        ELSE '#'
+		    END AS PARENT,
+		    'fas fa-user' AS icon
+		FROM
+		    COMCD a,
+		    EMPLOYEE b
+		WHERE 
+		    b.EMP_JBGD_NM = a.COMCD_GROUPCD
+		AND    
+		    EMP_CLSF = 'A301'
+		AND 
+		    ENABLED = 1
+		ORDER BY 
+			b.EMP_JBGD_NM ASC
+	</select>
+	
+	<select id="getDeptCn" parameterType="kr.or.oho.vo.JsTreeVO" resultType="kr.or.oho.vo.DeptVO">
+		SELECT
+			DEPT_NO,
+			DEPT_NM,
+			DEPT_TELNO
+		FROM
+			DEPT
+		WHERE 
+			DEPT_NO = #{id}
+	</select>
+	
+	<select id="getEmpCn" parameterType="kr.or.oho.vo.JsTreeVO" resultType="kr.or.oho.vo.EmployeeVO">
+		SELECT
+			EMP_NO,
+			EMP_NM,
+			EMP_JBGD_NM
+		FROM
+			EMPLOYEE
+		WHERE
+			ENABLED = 1
+			AND EMP_CLSF = 'A301'
+			AND DEPT_NO = #{id}
+		ORDER BY
+			EMP_JBGD_NM ASC
+	</select>
+	
+	<select id="getAllDept" resultType="kr.or.oho.vo.DeptVO">
+		SELECT
+			DEPT_NO,
+			DEPT_NM,
+			DEPT_TELNO
+		FROM
+			DEPT
+	</select>
+	
+	<update id="moveDept" parameterType="kr.or.oho.vo.EmployeeVO">
+		UPDATE
+			EMPLOYEE
+		SET
+			DEPT_NO = #{deptNo}
+		WHERE
+			EMP_NO = #{empNo}
+	</update>
+</mapper>

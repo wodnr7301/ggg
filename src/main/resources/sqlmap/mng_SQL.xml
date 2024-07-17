@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.MngMapper">
+	<select id="getList" resultType="kr.or.oho.vo.MngVO">
+		SELECT
+			e.EMP_NM,
+			f.FRCS_NM,
+			f.FRCS_ADDR,
+			m.EMP_NO,
+			m.FRCS_NO,
+			m.MNG_NO,
+			m.MNG_DT,
+			m.MNG_YN,
+			m.MNG_PP
+		FROM
+			EMPLOYEE e,
+			FRANCHISE f,
+			MNG m
+		WHERE 
+			m.EMP_NO = e.EMP_NO
+			AND m.FRCS_NO = f.FRCS_NO
+		ORDER BY m.MNG_YN, m.MNG_DT DESC
+	</select>
+	
+	<select id="getCount" resultType="kr.or.oho.vo.MngVO">
+		SELECT
+			(SELECT COUNT(*) FROM MNG) AS TOTAL,
+			(SELECT COUNT(*) FROM MNG WHERE MNG_YN = 'Y') AS SUCCESS,
+			(SELECT COUNT(*) FROM MNG WHERE MNG_YN = 'N') AS ING
+		FROM
+			DUAL
+	</select>
+	
+	<insert id="createMng" parameterType="kr.or.oho.vo.MngVO">
+		INSERT
+			INTO
+			MNG
+		(EMP_NO,
+			FRCS_NO,
+			MNG_NO,
+			MNG_DT,
+			MNG_YN,
+			MNG_PP)
+		VALUES(#{empNo},
+		#{frcsNo},
+		('MNG'||NVL(TRIM(TO_CHAR((SELECT MAX(TO_NUMBER(SUBSTR(MNG_NO ,4)))+1 FROM MNG),'000')), TRIM((TO_CHAR(1,'000'))))),
+		#{mngDt} ,
+		'N' ,
+		#{mngPp})	
+	</insert>
+	
+	<select id="getOneDay" parameterType="kr.or.oho.vo.MngVO" resultType="kr.or.oho.vo.MngVO">
+		SELECT
+			e.EMP_NM,
+			f.FRCS_NM,
+			f.FRCS_ADDR,
+			m.EMP_NO,
+			m.FRCS_NO,
+			m.MNG_NO,
+			m.MNG_DT,
+			m.MNG_YN,
+			m.MNG_PP
+		FROM
+			EMPLOYEE e,
+			FRANCHISE f,
+			MNG m
+		WHERE 
+			m.EMP_NO = e.EMP_NO
+			AND m.FRCS_NO = f.FRCS_NO
+			AND m.MNG_DT = #{mngDt}
+		ORDER BY m.MNG_YN, m.MNG_DT DESC
+	</select>
+	
+	<select id="detail" parameterType="String" resultType="kr.or.oho.vo.MngVO">
+		SELECT
+			e.EMP_NM,
+			f.FRCS_NM,
+			f.FRCS_ADDR,
+			m.EMP_NO,
+			m.FRCS_NO,
+			m.MNG_NO,
+			m.MNG_DT,
+			m.MNG_YN,
+			m.MNG_PP,
+			c.COMCD_GROUPCD AS LOC
+		FROM
+			EMPLOYEE e,
+			FRANCHISE f,
+			MNG m,
+			COMCD c
+		WHERE 
+			m.EMP_NO = e.EMP_NO
+			AND m.FRCS_NO = f.FRCS_NO
+			AND f.FT_RGN_NM = c.COMCD_GROUPCD
+			AND m.MNG_NO = #{mngNo}
+	</select>
+	
+	<update id="update" parameterType="kr.or.oho.vo.MngVO">
+		UPDATE
+			MNG
+		SET
+			EMP_NO = #{empNo},
+			FRCS_NO = #{frcsNo},
+			MNG_DT = #{mngDt},
+			MNG_YN = 'N' ,
+			MNG_PP = #{mngPp}
+		WHERE
+			MNG_NO = #{mngNo}
+	</update>
+	
+	<delete id="delete" parameterType="String">
+		DELETE
+		FROM
+			MNG
+		WHERE
+			MNG_NO = #{mngNo}
+	</delete>
+	
+	<update id="done" parameterType="String">
+		UPDATE
+			MNG
+		SET
+			MNG_YN = 'Y'
+		WHERE
+			MNG_NO = #{mngNo}
+	</update>
+	
+	<select id="getMax" resultType="String">
+		SELECT 
+			(SELECT MAX(MNG_NO) FROM MNG) MAX
+		FROM
+			DUAL
+	</select>
+</mapper>

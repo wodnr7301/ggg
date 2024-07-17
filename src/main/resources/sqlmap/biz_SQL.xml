@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.BizMapper">
+	
+	<select id="getBizVOList" resultType="kr.or.oho.vo.BizVO">
+		SELECT
+			BIZ_NO,
+			BIZ_NM,
+			BIZ_CN,
+			BIZ_CMPTN_YN,
+			BIZ_STDT,
+			BIZ_EDT
+		FROM
+			BIZ
+		ORDER BY
+			BIZ_CMPTN_YN ASC
+	</select>
+	
+	<insert id="createBiz" parameterType="kr.or.oho.vo.BizVO">
+		INSERT
+			INTO
+			BIZ
+		(BIZ_NO,
+			BIZ_NM,
+			BIZ_CMPTN_YN,
+			BIZ_CN,
+			BIZ_STDT,
+			BIZ_EDT)
+		VALUES(
+		('BIZ'||NVL(TRIM(TO_CHAR((SELECT MAX(TO_NUMBER(SUBSTR(BIZ_NO,4)))+1 FROM BIZ),'000')), TRIM((TO_CHAR(1,'000'))))),
+		#{bizNm},
+		'I' ,
+		#{bizCn},
+		SYSDATE,
+		SYSDATE)
+	</insert>
+	
+	<insert id="createBizMember" parameterType="kr.or.oho.vo.BizMemberVO">
+		INSERT
+			INTO
+			BIZ_MEMBER
+		(BIZ_NO,
+			EMP_NO,
+			BIZ_ROLE)
+		VALUES(
+		(SELECT BIZ_NO FROM (SELECT BIZ_NO FROM BIZ ORDER BY BIZ_NO DESC) WHERE ROWNUM = 1),
+		#{empNo},
+		#{bizRole})
+	</insert>
+	
+	<resultMap type="kr.or.oho.vo.BizVO" id="bizVOMap">
+		<result property="bizNo" column="BIZ_NO"/>
+		<result property="bizNm" column="BIZ_NM"/>
+		<result property="bizCn" column="BIZ_CN"/>
+		<result property="bizCmptnYn" column="BIZ_CMPTN_YN"/>
+		<result property="bizStdt" column="BIZ_STDT"/>
+		<result property="bizEdt" column="BIZ_EDT"/>
+		<collection property="bizMemberVOList" resultMap="bizMemberVOMap"></collection>
+	</resultMap>
+	<resultMap type="kr.or.oho.vo.BizMemberVO" id="bizMemberVOMap">
+		<result property="bizNo" column="BIZ_NO"/>
+		<result property="empNo" column="EMP_NO"/>
+		<result property="empNm" column="EMP_NM"/>
+		<result property="bizRole" column="BIZ_ROLE"/>
+	</resultMap>
+	
+	
+	<select id="detail" parameterType="kr.or.oho.vo.BizVO" resultMap="bizVOMap">
+		SELECT
+			a.BIZ_NO,
+			a.BIZ_NM ,
+			a.BIZ_CMPTN_YN,
+			a.BIZ_CN,
+			a.BIZ_STDT,
+			a.BIZ_EDT,
+			b.EMP_NO ,
+			b.BIZ_ROLE,
+			c.EMP_NM
+		FROM
+			BIZ a,
+			BIZ_MEMBER b,
+			EMPLOYEE c
+		WHERE 
+			a.BIZ_NO = b.BIZ_NO
+			AND	
+			b.EMP_NO = c.EMP_NO
+			AND
+			a.BIZ_NO = #{bizNo}
+	</select>
+	
+	<delete id="deleteMember" parameterType="kr.or.oho.vo.BizVO">
+		DELETE
+		FROM
+			BIZ_MEMBER
+		WHERE
+			BIZ_NO = #{bizNo}
+	</delete>
+	
+	<insert id="updateMember" parameterType="kr.or.oho.vo.BizMemberVO">
+		INSERT
+			INTO
+			BIZ_MEMBER
+		(BIZ_NO,
+			EMP_NO,
+			BIZ_ROLE)
+		VALUES(
+		#{bizNo},
+		#{empNo},
+		#{bizRole})
+	</insert>
+	
+	<update id="updateBiz" parameterType="kr.or.oho.vo.BizVO">
+		UPDATE
+			BIZ
+		SET
+			BIZ_NM = #{bizNm},
+			BIZ_CMPTN_YN = 'I',
+			BIZ_CN = #{bizCn}
+		WHERE
+			BIZ_NO = #{bizNo}
+	</update>
+	
+	<update id="updateStatus" parameterType="kr.or.oho.vo.BizVO">
+		UPDATE
+			BIZ
+		SET
+			BIZ_CMPTN_YN = 'Y',
+			BIZ_EDT = SYSDATE
+		WHERE
+			BIZ_NO = #{bizNo}
+	</update>
+	
+	<update id="updateStatusN" parameterType="kr.or.oho.vo.BizVO">
+		UPDATE
+			BIZ
+		SET
+			BIZ_CMPTN_YN = 'N',
+		WHERE
+			BIZ_NO = #{bizNo}
+	</update>
+	
+</mapper>

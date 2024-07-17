@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.CorpVhrMapper">
+
+<!-- 	법인차량 리스트 -->
+	<select id="corpVhrList" resultType="kr.or.oho.vo.CorpVhrVO">
+	SELECT 
+			CV_NO
+		, 	CV_MDL_NM
+		, 	CV_USE_YN
+	FROM 
+			CORP_VHR
+	</select>
+	
+<!-- 	법인차량 등록 -->
+	<insert id="registerCorpVhr" parameterType="kr.or.oho.vo.CorpVhrVO">
+	INSERT INTO 
+		CORP_VHR 
+			(
+			  CV_NO
+			, CV_MDL_NM
+			, CV_PRCHS_YMD
+			, CV_USE_YN
+			)
+	VALUES 
+			(
+			  #{cvNo}
+			, #{cvMdlNm}
+			, #{cvPrchsYmd}
+			,'B101'
+			)
+	</insert>
+	
+<!-- 	관리대장 목록 -->
+	<select id="mngLedgerList" resultType="kr.or.oho.vo.CorpVhrVO">
+	SELECT 
+	      CVML_NO
+	    , CV_NO
+	    , EMP_NO
+	    , CVML_RENT_YMD
+	    , CVML_RTN_YMD
+	    , CVML_USE_PRPS 
+	FROM 
+	    CORP_VHR_MNG_LDGR
+
+	</select>
+	
+<!-- 	차량 예약 -->
+	<insert id="reserveCorpVhr" parameterType="kr.or.oho.vo.CorpVhrVO">
+	INSERT INTO
+		CORP_VHR_MNG_LDGR
+		(
+			  CVML_NO
+			, CV_NO
+			, EMP_NO
+			, CVML_RENT_YMD
+			, CVML_RTN_YMD
+			, CVML_USE_PRPS
+			, CVML_USER
+		)
+		VALUES 
+		(
+			('CML' || NVL(TRIM(TO_CHAR((SELECT MAX(TO_NUMBER(SUBSTR(CVML_NO, 5))) + 1 FROM CORP_VHR_MNG_LDGR),'000')),TRIM(TO_CHAR(1, '000'))))
+			,	#{cvNo}	
+			,	#{empNo}
+			,	#{cvmlRentYmd, jdbcType=DATE}
+			,	#{cvmlRtnYmd, jdbcType=DATE}
+			,	#{cvmlUsePrps}
+			,	#{cvmlUser}
+		)
+	</insert>
+	
+<!-- 	차량관리대장 -->
+	<select id="cvMngLdgr" parameterType="kr.or.oho.vo.CorpVhrVO" resultType="kr.or.oho.vo.CorpVhrVO">
+	SELECT 
+	  CVML_NO
+	, CV_NO
+	, EMP_NO
+	, CVML_RENT_YMD
+	, CVML_RTN_YMD
+	, CVML_USE_PRPS
+	, CVML_USER
+	FROM 
+		CORP_VHR_MNG_LDGR
+	ORDER BY 
+		CVML_RENT_YMD DESC
+	</select>
+
+<!-- 	차량을 대여한 사원의 정보 -->
+	<select id="cvEmpDetail1" parameterType="kr.or.oho.vo.EmployeeVO" resultType="kr.or.oho.vo.EmployeeVO">
+ 		SELECT 
+ 			EMP_NO, EMP_NM, EMP_TELNO, B.DEPT_NO 
+ 		FROM 
+ 			EMPLOYEE A, DEPT B 
+ 		WHERE 
+ 			A.DEPT_NO = B.DEPT_NO 
+ 		AND 
+ 			A.EMP_NO = #{cvmlUser}
+	</select>
+	
+<!-- 	차량을 대여한 사원의 정보 2 -->
+	<select id="cvEmpDetail2" parameterType="kr.or.oho.vo.EmployeeVO" resultType="String">
+        SELECT 
+        	CVML_USE_PRPS 
+        FROM 
+        	CORP_VHR_MNG_LDGR WHERE CVML_USER = #{cvmlUser} 
+        AND
+        	CVML_NO = #{cvmlNo}
+	</select>
+	
+<!-- 	사원본인의 차량대여대장 -->
+	<select id="mycvMngLdgr" parameterType="String" resultType="kr.or.oho.vo.CorpVhrVO">
+		SELECT 
+		    CVML_NO
+		  , CV_NO
+		  , CVML_RENT_YMD
+		  , CVML_RTN_YMD
+		FROM
+		    CORP_VHR_MNG_LDGR
+		WHERE EMP_NO = #{empNo}
+	</select>
+	
+<!-- 	법인차량 반납 -->
+	<update id="rtnVhr" parameterType="kr.or.oho.vo.CorpVhrVO">
+	 	UPDATE 
+	 		CORP_VHR_MNG_LDGR
+		SET EMP_NO = ''
+		,   CVML_RTN_YMD = SYSDATE
+		WHERE 
+			CVML_NO = #{cvmlNo}
+	</update>
+</mapper>

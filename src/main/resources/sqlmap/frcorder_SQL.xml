@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.FrcorderMapper">
+
+	<!-- 모든 지역 -->
+	<select id="getAllLoc" resultType="kr.or.oho.vo.ComcdVO">
+		SELECT COMCD_GROUPCD, COMCD_CDNM 
+		FROM COMCD 
+		WHERE COMCD_CDNMCOM_GC='D1'
+	</select>
+	
+	<select id="getFranchise" parameterType="String" resultType="kr.or.oho.vo.FranchiseVO">
+		SELECT
+		    A.FRCS_NO
+		    , A.FRCS_NM
+		    , A.FRCS_ADDR
+		    , A.FRCS_DADDR
+		    , A.FRCS_ZIP
+		    , A.FRCS_TELNO
+		    , A.EMP_NO
+		    , A.FT_NO
+		    , A.FT_RGN_NM
+		    , B.COMCD_CDNM
+		FROM
+		    FRANCHISE A, COMCD B
+		WHERE 1=1
+		AND A.FT_RGN_NM = B.COMCD_GROUPCD
+		AND A.EMP_NO = #{empNo}
+	</select>
+	
+	<!-- 모든 식재료 구분 -->
+	<select id="getAllGdsGu" resultType="kr.or.oho.vo.ComcdVO">
+		SELECT COMCD_GROUPCD, COMCD_CDNM 
+		FROM COMCD 
+		WHERE COMCD_CDNMCOM_GC='E1'
+	</select>
+	
+	<!-- 전체 or 구분 별 상품 목록 -->
+	<select id="getAllGds" parameterType="kr.or.oho.vo.ComcdVO" resultType="kr.or.oho.vo.GdsVO">
+		SELECT
+			GDS_NO
+			, GDS_NM
+			, GDS_PRCHS_AMT
+			, GDS_NTSL_AMT
+			, GDS_STOCK
+			, MIN_GDS_STOCK
+			, GDS_IMG
+			, CNPT_NO
+			, GDS_GU
+		FROM
+			GDS
+		WHERE 1=1
+		<if test="comcdGroupcd != null and comcdGroupcd != ''">
+			AND GDS_GU = #{comcdGroupcd}
+		</if>
+	</select>
+	
+	<resultMap type="kr.or.oho.vo.FrcOrderVO" id="frcorderMap">
+		<result property="foNo" column="FO_NO"/>
+		<result property="foOdt" column="FO_ODT"/>
+		<result property="foPrcsYn" column="FO_PRCS_YN"/>
+		<result property="foStlmDt" column="FO_STLM_DT"/>
+		<result property="foMnm" column="FO_MNM"/>
+		<result property="foShippingStrdt" column="FO_SHIPPING_STRDT"/>
+		<result property="foShippingEnddt" column="FO_SHIPPING_ENDDT"/>
+		<result property="frcsNo" column="FRCS_NO"/>
+		<result property="foDeliveryDt" column="FO_DELIVERY_DT"/>
+		<result property="foRequest" column="FO_REQUEST"/>
+		<collection property="frcOrderDtlVOList" resultMap="frcorderDtlMap"></collection>
+	</resultMap>
+	
+	<resultMap type="kr.or.oho.vo.FrcOrderDtlVO" id="frcorderDtlMap">
+		<result property="fodNo" column="FOD_NO"/>
+		<result property="gdsNo" column="GDS_NO"/>
+		<result property="foNo" column="FO_NO"/>
+		<result property="fodUnit" column="FOD_UNIT"/>
+		<result property="fodQnt" column="FOD_QNT"/>
+		<result property="fodPrc" column="FOD_PRC"/>
+		<result property="fodAmt" column="FOD_AMT"/>
+		<result property="fodGdsNm" column="FOD_GDS_NM"/>
+	</resultMap>
+	
+	<select id="getFrcGdsDtl" parameterType="kr.or.oho.vo.FrcOrderVO" resultMap="frcorderMap">
+		SELECT
+			A.FO_NO
+			, A.FO_ODT
+			, A.FO_PRCS_YN
+			, A.FO_STLM_DT
+			, A.FO_MNM
+			, A.FO_SHIPPING_STRDT
+			, A.FO_SHIPPING_ENDDT
+			, A.FRCS_NO
+			, A.FO_DELIVERY_DT
+			, A.FO_REQUEST
+			, B.FOD_NO
+			, B.GDS_NO
+			, B.FO_NO
+			, B.FOD_UNIT
+			, B.FOD_QNT
+			, B.FOD_PRC
+			, B.FOD_AMT
+			, B.FOD_GDS_NM
+		FROM
+			FRCS_ORDER A
+			, FRCS_ORDER_DTL B
+		WHERE
+			1 = 1
+			AND A.FO_NO = B.FO_NO
+			<if test="frcsNo != null and frcsNo != ''">
+				AND A.FRCS_NO = #{frcsNo}
+			</if>
+			<if test="foPrcsYn != null and foPrcsYn != ''">
+				AND A.FO_PRCS_YN = 'E'
+			</if>
+	</select>
+	
+	<insert id="createPostFo" parameterType="kr.or.oho.vo.FrcOrderVO">
+		 INSERT INTO
+			FRCS_ORDER(
+			FO_NO
+			, FO_DELIVERY_DT
+			, FRCS_NO
+			, FO_REQUEST
+			, FO_TOTAL
+			)
+		VALUES('FO' || NVL(TRIM(TO_CHAR((SELECT MAX(SUBSTR(FO_NO, 3))+ 1 FROM
+		    FRCS_ORDER), '000')), TRIM((TO_CHAR(1, '000'))))
+		, #{foDeliveryDt}
+		, #{frcsNo}
+		, #{foRequest}
+		, #{foTotal}
+		)
+	</insert>
+	
+	<insert id="createPostFoDtl" parameterType="kr.or.oho.vo.FrcOrderDtlVO">
+		 <selectKey resultType="String" order="BEFORE" keyProperty="foNo">
+			SELECT 'FO'||NVL(TRIM(TO_CHAR((SELECT MAX(SUBSTR(FO_NO,3)) FROM FRCS_ORDER),'000')), TRIM((TO_CHAR(1,'000')))) FROM DUAL
+		</selectKey>
+		INSERT
+		    INTO
+		    FRCS_ORDER_DTL(FOD_NO, GDS_NO, FOD_QNT, FOD_PRC, FOD_AMT, FOD_GDS_NM, FO_NO)
+		VALUES('FOD' || NVL(TRIM(TO_CHAR((SELECT MAX(SUBSTR(FOD_NO, 4))+ 1 FROM FRCS_ORDER_DTL), '000')), TRIM((TO_CHAR(1, '000'))))
+		    , #{gdsNo}
+		    , #{fodQnt}
+		    , #{fodPrc}
+		    , #{fodAmt}
+		    , #{fodGdsNm}
+		    , #{foNo}
+		    )
+	</insert>
+	
+	<!-- frcorder/list 모든 거래내역 -->
+	<resultMap type="kr.or.oho.vo.FrcOrderVO" id="frcorderMap2">
+		<result property="foNo" column="FO_NO"/>
+		<result property="foOdt" column="FO_ODT"/>
+		<result property="foPrcsYn" column="FO_PRCS_YN"/>
+		<result property="foYn" column="FO_YN"/>
+		<result property="foStlmDt" column="FO_STLM_DT"/>
+		<result property="foMnm" column="FO_MNM"/>
+		<result property="foShippingStrdt" column="FO_SHIPPING_STRDT"/>
+		<result property="foShippingEnddt" column="FO_SHIPPING_ENDDT"/>
+		<result property="frcsNo" column="FRCS_NO"/>
+		<result property="foDeliveryDt" column="FO_DELIVERY_DT"/>
+		<result property="foRequest" column="FO_REQUEST"/>
+		<collection property="frcOrderDtlVOList" resultMap="frcorderDtlMap2"></collection>
+	</resultMap>
+	
+	<resultMap type="kr.or.oho.vo.FrcOrderDtlVO" id="frcorderDtlMap2">
+		<result property="fodNo" column="FOD_NO"/>
+		<result property="gdsNo" column="GDS_NO"/>
+		<result property="foNo" column="FO_NO"/>
+		<result property="fodUnit" column="FOD_UNIT"/>
+		<result property="fodQnt" column="FOD_QNT"/>
+		<result property="fodPrc" column="FOD_PRC"/>
+		<result property="fodAmt" column="FOD_AMT"/>
+		<result property="fodGdsNm" column="FOD_GDS_NM"/>
+	</resultMap>
+	
+	<select id="getAllFrcorder" parameterType="kr.or.oho.vo.FrcOrderVO" resultMap="frcorderMap2">
+		SELECT
+			A.FO_NO
+			, A.FO_ODT
+			, A.FO_PRCS_YN
+			, A.FO_STLM_DT
+			, A.FO_MNM
+			, A.FO_SHIPPING_STRDT
+			, A.FO_SHIPPING_ENDDT
+			, A.FRCS_NO
+			, A.FO_DELIVERY_DT
+			, A.FO_REQUEST
+			, A.FO_YN
+			, B.FOD_NO
+			, B.GDS_NO
+			, B.FO_NO
+			, B.FOD_UNIT
+			, B.FOD_QNT
+			, B.FOD_PRC
+			, B.FOD_AMT
+			, B.FOD_GDS_NM
+		FROM
+			FRCS_ORDER A
+			, FRCS_ORDER_DTL B
+		WHERE 1=1
+		AND A.FO_NO = B.FO_NO
+		<if test="foPrcsYn != null and foPrcsYn != ''">
+			AND A.FO_PRCS_YN = #{foPrcsYn}
+		</if>
+		<if test="frcsNo != null and frcsNo != ''">
+			AND A.FRCS_NO = #{frcsNo}
+		</if>
+		ORDER BY A.FO_PRCS_YN DESC,
+		A.FO_NO DESC
+	</select>
+	
+	<select id="getfrcOrderDtl" parameterType="kr.or.oho.vo.FrcOrderVO" resultType="kr.or.oho.vo.FrcOrderDtlVO">
+	SELECT
+		A.FOD_NO
+		, A.GDS_NO
+		, A.FO_NO
+		, A.FOD_UNIT
+		, A.FOD_QNT
+		, A.FOD_PRC
+		, A.FOD_AMT
+		, A.FOD_GDS_NM
+        , B.FO_ODT
+        , B.FO_PRCS_YN
+        , B.FO_REQUEST
+        , B.FO_DELIVERY_DT
+        , C.FRCS_NM
+	FROM 
+		FRCS_ORDER_DTL A, FRCS_ORDER B, FRANCHISE C
+	WHERE 1=1
+    AND B.FRCS_NO = C.FRCS_NO
+    AND A.FO_NO = B.FO_NO
+    AND A.FO_NO = #{foNo}
+	</select>
+	
+	<select id="getFrcsNo" parameterType="String" resultType="String">
+	SELECT FRCS_NO
+	FROM FRANCHISE
+	WHERE EMP_NO = #{empNo}
+	</select>
+	
+	<delete id="deleteFrcOrder" parameterType="kr.or.oho.vo.FrcOrderVO">
+	    DELETE FROM FRCS_ORDER
+	    WHERE FO_NO = #{foNo}
+	</delete> 
+	
+	<delete id="deleteFrcOrderDtl" parameterType="kr.or.oho.vo.FrcOrderVO">
+		DELETE FROM FRCS_ORDER_DTL
+	    WHERE FO_NO = #{foNo}
+	</delete>
+	
+	<!-- cart테이블 insert -->
+	<insert id="createCart" parameterType="kr.or.oho.vo.CartVO">
+		INSERT
+			INTO
+			CART(CART_NO, EMP_NO
+			<if test="cartMemo != null and cartMemo != ''">
+			, CART_MEMO
+			</if>
+			)
+		VALUES('CT' || NVL(TRIM(TO_CHAR((SELECT MAX(SUBSTR(CART_NO, 3))+ 1 FROM CART), '000')), TRIM((TO_CHAR(1, '000'))))
+		, #{empNo}
+		<if test="cartMemo != null and cartMemo != ''">
+			, #{cartMemo}
+		</if>
+		)
+	</insert>
+	
+	<!-- cartDetail테이블 insert -->
+	<insert id="createCartDtl" parameterType="kr.or.oho.vo.CartDtlVO">
+	 	<selectKey resultType="String" order="BEFORE" keyProperty="cartNo">
+	    	SELECT 'CT'||NVL(TRIM(TO_CHAR((SELECT MAX(SUBSTR(CART_NO,3)) FROM CART),'000')), TRIM((TO_CHAR(1,'000')))) FROM DUAL
+	    </selectKey>
+		INSERT
+			INTO
+			    CART_DETAIL(CDTL_NO, CDTL_QNT, GDS_NO, CDTL_GDS_NM, CDTL_NTSL_AMT, CDTL_AMT, CART_NO)
+		VALUES('CTD' || NVL(TRIM(TO_CHAR((SELECT MAX(SUBSTR(CDTL_NO, 4))+ 1 FROM CART_DETAIL), '000')), TRIM((TO_CHAR(1, '000'))))
+				, #{cdtlQnt}
+		        , #{gdsNo}
+		        , #{cdtlGdsNm}
+		        , #{cdtlNtslAmt}
+		        , #{cdtlAmt}
+		        , #{cartNo})
+	</insert>
+	
+	<delete id="deleteAjax" parameterType="kr.or.oho.vo.CartVO">
+		DELETE FROM CART WHERE CART_NO = #{cartNo}
+	</delete>
+	
+	<delete id="deleteDtlAjax" parameterType="kr.or.oho.vo.CartVO">
+		DELETE FROM CART_DETAIL WHERE CART_NO = #{cartNo}
+	</delete>
+	
+	<select id="getCartDtl" parameterType="kr.or.oho.vo.CartVO" resultType="kr.or.oho.vo.CartDtlVO">
+		SELECT
+			CDTL_NO
+			, CDTL_QNT
+			, GDS_NO
+			, CDTL_GDS_NM
+			, CDTL_NTSL_AMT
+			, CDTL_AMT
+			, CART_NO
+		FROM
+			CART_DETAIL
+		WHERE
+			CART_NO =#{cartNo}
+	</select>
+	
+	<select id="locFrn" parameterType="kr.or.oho.vo.ComcdVO" resultType="kr.or.oho.vo.FranchiseVO">
+		SELECT
+			FRCS_NO
+			, FRCS_NM
+			, FRCS_ADDR
+			, FRCS_DADDR
+			, FRCS_ZIP
+			, FRCS_TELNO
+			, EMP_NO
+			, FT_NO
+			, FT_RGN_NM
+			, FRCS_CLSBIZ_YN
+		FROM
+			FRANCHISE
+		WHERE
+			FT_RGN_NM =#{comcdGroupcd}
+	</select>
+	
+	<update id="updatePrcsYn" parameterType="String">
+		UPDATE FRCS_ORDER
+		SET FO_PRCS_YN = 'E'
+		WHERE FO_NO= #{foNo}
+	</update>
+	
+	<update id="updateSave" parameterType="hashmap">
+		UPDATE FRCS_STOCK 
+		SET FRCSS_CNT = ((SELECT FRCSS_CNT FROM FRCS_STOCK WHERE GDS_NO = #{gdsNo})+#{fodQnt})
+		WHERE GDS_NO = #{gdsNo} AND FRCS_NO = #{frcsNo}
+	</update>
+	
+	<select id="getAllStock" parameterType="kr.or.oho.vo.ComcdVO" resultType="kr.or.oho.vo.FrcsStockVO">
+		SELECT
+			A.GDS_NO
+			, A.FRCS_NO
+			, A.FRCSS_CNT
+			, A.MIN_GDS_STOCK
+			, B.GDS_NTSL_AMT
+			, B.GDS_NM
+			, C.COMCD_CDNM
+		FROM
+			FRCS_STOCK A
+			, GDS B
+			, COMCD C
+		WHERE
+			A.GDS_NO = B.GDS_NO
+			AND B.GDS_GU = C.COMCD_GROUPCD
+			<if test="frcsNo != null and frcsNo != ''">
+				AND A.FRCS_NO = #{frcsNo}
+			</if>
+			<if test="comcdGroupcd != null and comcdGroupcd != ''">
+				AND C.COMCD_GROUPCD = #{comcdGroupcd}
+			</if>
+	</select>
+	
+	<select id="getFrcsNm" parameterType="String" resultType="String">
+		SELECT FRCS_NM FROM FRANCHISE WHERE FRCS_NO = #{frcsNo}
+	</select>
+	
+</mapper>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.FrcsMainPageMapper">
+
+	<select id="getAllRevenue" parameterType="String" resultType="kr.or.oho.vo.RevenueVO">
+		SELECT
+			FRCS_NO
+			, FS_AMT
+			, FS_COST
+			, FS_EARN
+			, FS_OP
+			, FS_WRT_DT
+			, FS_MDFCN_DT
+			, FS_LBRCO
+			, FS_NTSL_AMT
+			, FS_MNG_AMT
+			, FS_WRT_YEAR
+			, FS_MONTHLY
+			, FS_WRT_QY
+			, FS_EXPENSE
+		FROM
+			FRCS_SLS
+		WHERE
+			FRCS_NO = #{frcsNo}
+	</select>
+	
+	
+</mapper>

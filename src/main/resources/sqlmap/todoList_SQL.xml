@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.TodoListMapper">
+	
+	<resultMap type="kr.or.oho.vo.TodoListVO" id="todoListMap">
+		<result property="tdlNo" column="TDL_NO"/>
+		<result property="tdlTtl" column="TDL_TTL"/>
+		<result property="tdlCn" column="TDL_CN"/>
+		<result property="tdlStrDt" column="TDL_STR_DT"/>
+		<result property="tdlEndDt" column="TDL_END_DT"/>
+		<result property="tdlCmptnYn" column="TDL_CMPTN_YN"/>
+		<result property="empNo" column="EMP_NO"/>
+		<result property="deptNo" column="DEPT_NO"/>
+		<result property="empNm" column="EMP_NM"/>
+		<result property="deptNm" column="DEPT_NM"/>
+		<association property="employeeVO" resultMap="employeeMap"></association>
+		<association property="deptVO" resultMap="deptMap"></association>
+	</resultMap>
+	
+	<resultMap type="kr.or.oho.vo.EmployeeVO" id="employeeMap">
+		<result property="empNo" column="EMP_NO"/>
+		<result property="empNm" column="EMP_NM"/>
+	</resultMap>
+	
+	<resultMap type="kr.or.oho.vo.DeptVO" id="deptMap">
+		<result property="deptNo" column="DEPT_NO"/>
+		<result property="deptNm" column="DEPT_NM"/>
+	</resultMap>
+	
+	<select id="getCalendarList" resultMap="todoListMap">
+		SELECT
+		    a.TDL_NO
+		    , a.TDL_TTL
+		    , TO_CHAR(a.TDL_STR_DT, 'YYYY-MM-DD') AS TDL_STR_DT
+		    , TO_CHAR(a.TDL_END_DT, 'YYYY-MM-DD') AS TDL_END_DT
+		    , a.EMP_NO
+		    , a.DEPT_NO
+		    , a.TDL_CMPTN_YN
+		    , a.TDL_CN
+		    , (select b.EMP_NM from employee b where b.emp_no = a.emp_no) EMP_NM
+     		, (select c.DEPT_NM from dept c where a.dept_no = c.dept_no) DEPT_NM
+		FROM TO_DO_LIST a
+		WHERE EMP_NO = #{empNo}
+		AND DEPT_NO = #{deptNo}
+	</select>
+	
+	<select id="getCalendarCount" parameterType="String" resultType="int">
+		SELECT COUNT(TDL_NO)
+			FROM TO_DO_LIST
+		WHERE
+    		EMP_NO = #{empNo}
+    		AND TRUNC(TDL_STR_DT) = TRUNC(SYSDATE)
+	</select>
+	
+	<select id="getCheckBoxList" parameterType="hashMap" resultMap="todoListMap">
+		SELECT
+			a.TDL_NO
+			, a.TDL_TTL
+			, TO_CHAR(a.TDL_STR_DT, 'YYYY-MM-DD') AS TDL_STR_DT
+			, TO_CHAR(a.TDL_END_DT, 'YYYY-MM-DD') AS TDL_END_DT
+	        , a.EMP_NO
+			, a.DEPT_NO
+			, a.TDL_CMPTN_YN
+			, a.TDL_CN
+	        , b.EMP_NM
+		FROM TO_DO_LIST a
+        LEFT OUTER JOIN
+    		EMPLOYEE b
+        ON
+    		a.EMP_NO = b.EMP_NO
+        WHERE
+        a.EMP_NO = #{empNo}
+        AND a.TDL_CMPTN_YN = #{tdlCmptnYn}
+	</select>
+	
+	<select id="getCheckBoxList2" parameterType="hashMap" resultMap="todoListMap">
+		SELECT
+			a.TDL_NO
+			, a.TDL_TTL
+			, a.TDL_CN
+			, TO_CHAR(a.TDL_STR_DT, 'YYYY-MM-DD') AS TDL_STR_DT
+			, TO_CHAR(a.TDL_END_DT, 'YYYY-MM-DD') AS TDL_END_DT
+			, a.TDL_CMPTN_YN
+	        , a.EMP_NO
+			, a.DEPT_NO
+	        , b.DEPT_NM
+		FROM TO_DO_LIST a
+        LEFT OUTER JOIN
+    		dept b
+        ON
+    		a.dept_no = b.dept_no
+        WHERE
+        a.dept_no = #{deptNo}
+        AND a.TDL_CMPTN_YN = #{tdlCmptnYn}
+	</select>
+	
+	<select id="getCheckBoxList3" parameterType="hashMap" resultMap="todoListMap">
+		SELECT
+		    a.TDL_NO
+		    , a.TDL_TTL
+		    , TO_CHAR(a.TDL_STR_DT, 'YYYY-MM-DD') AS TDL_STR_DT
+		    , TO_CHAR(a.TDL_END_DT, 'YYYY-MM-DD') AS TDL_END_DT
+		    , a.EMP_NO
+		    , a.DEPT_NO
+		    , a.TDL_CMPTN_YN
+		    , a.TDL_CN
+		    , (select b.EMP_NM from employee b where b.emp_no = a.emp_no) EMP_NM
+     		, (select c.DEPT_NM from dept c where a.dept_no = c.dept_no) DEPT_NM
+		FROM TO_DO_LIST a
+		WHERE EMP_NO = #{empNo}
+		AND DEPT_NO = #{deptNo}
+	</select>
+	
+	<select id="getCalendarDetail" parameterType="kr.or.oho.vo.TodoListVO" resultMap="todoListMap">
+		SELECT
+		    a.TDL_NO
+		    , a.TDL_TTL
+		    , TO_CHAR(a.TDL_STR_DT, 'YYYY-MM-DD') AS TDL_STR_DT
+		    , TO_CHAR(a.TDL_END_DT, 'YYYY-MM-DD') AS TDL_END_DT
+		    , a.EMP_NO
+		    , a.DEPT_NO
+		    , a.TDL_CMPTN_YN
+		    , a.TDL_CN
+		    , (select b.EMP_NM from employee b where b.emp_no = a.emp_no) EMP_NM
+     		, (select c.DEPT_NM from dept c where a.dept_no = c.dept_no) DEPT_NM
+		FROM TO_DO_LIST a
+		WHERE a.TDL_NO = #{tdlNo} 
+	</select>
+
+	<insert id="createPost" parameterType="kr.or.oho.vo.TodoListVO">
+		<selectKey resultType="String" order="BEFORE" keyProperty="tdlNo">
+			SELECT NVL(SUBSTR(MAX(TDL_NO),1,3) || TRIM(TO_CHAR(SUBSTR(MAX(TDL_NO),4) + 1,'000')),'TDL001')
+			FROM   TO_DO_LIST
+		</selectKey>
+	
+		INSERT INTO TO_DO_LIST
+		(
+			TDL_NO
+			, TDL_TTL
+			, TDL_STR_DT
+			, TDL_END_DT
+			, EMP_NO
+			, DEPT_NO
+			, TDL_CMPTN_YN
+			, TDL_CN
+<!-- 			, BACK_COLOR -->
+		)
+		VALUES
+		(
+			#{tdlNo}
+			,#{tdlTtl}
+			,TO_DATE(#{tdlStrDt}, 'YYYY-MM-DD')
+			,TO_DATE(#{tdlEndDt}, 'YYYY-MM-DD')
+			,#{empNo}
+			,#{deptNo}
+			,#{tdlCmptnYn}
+			,#{tdlCn}
+<!-- 			,#{backColor} -->
+		)
+		
+	</insert>
+	
+	<update id="updatePost" parameterType="kr.or.oho.vo.TodoListVO">
+		UPDATE TO_DO_LIST
+	    SET
+	        TDL_TTL = #{tdlTtl},
+	        TDL_CN = #{tdlCn},
+	        TDL_STR_DT = #{tdlStrDt},
+	        TDL_END_DT =
+	            <if test='tdlEndDt == null'>
+	                <![CDATA[
+	                    NVL(TDL_END_DT, #{tdlStrDt} + 1)
+	                ]]>
+	            </if>
+	            <if test='tdlEndDt != null'>
+	                #{tdlEndDt}
+	            </if>,
+	        TDL_CMPTN_YN = #{tdlCmptnYn}
+	    WHERE 
+	        TDL_NO = #{tdlNo}
+	</update>
+	
+	<delete id="deletePost" parameterType="kr.or.oho.vo.TodoListVO">
+		DELETE FROM TO_DO_LIST
+		WHERE 
+			TDL_NO=#{tdlNo}
+	</delete>
+	
+</mapper>

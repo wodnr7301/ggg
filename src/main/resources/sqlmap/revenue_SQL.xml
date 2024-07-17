@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.RevenueMapper">
+<select id="revenueData" parameterType="map" resultType="kr.or.oho.vo.RevenueVO">
+SELECT
+    A.fs_amt
+  , A.fs_op
+  , A.fs_wrt_year
+  , A.fs_monthly
+  , A.fs_earn
+  , A.fs_lbrco
+  , A.fs_ntsl_amt
+  , A.fs_mng_amt
+  , A.fs_cost
+  , A.fs_expense
+  , B.FRCS_NM
+  , B.FRCS_ADDR
+  , B.FRCS_DADDR
+  , B.FRCS_TELNO
+  , C.EMP_NM
+FROM
+      frcs_sls A
+    , FRANCHISE B
+    , EMPLOYEE C
+WHERE
+        A.FRCS_NO = B.FRCS_NO
+    AND B.EMP_NO = C.EMP_NO 
+    AND A.fs_wrt_year = #{fsWrtYear}
+    AND c.emp_no = #{empNo}
+ORDER BY fs_monthly ASC
+</select>
+
+<select id="revenueList" parameterType="map" resultType="kr.or.oho.vo.RevenueVO">
+SELECT
+    a.frcs_no,
+    a.fs_amt,
+    a.fs_cost,
+    a.fs_earn,
+    a.fs_op,
+    a.fs_wrt_dt,
+    a.fs_mdfcn_dt,
+    a.fs_lbrco,
+    a.fs_ntsl_amt,
+    a.fs_mng_amt,
+    a.fs_wrt_year,
+    a.fs_monthly,
+    a.fs_wrt_qy,
+    a.fs_expense,
+    b.frcs_nm,
+    b.frcs_addr,
+    b.frcs_daddr, 
+    b.emp_no,
+    c.ft_nm
+FROM
+    frcs_sls a
+    JOIN franchise b ON a.frcs_no = b.frcs_no
+    JOIN frcs_type c ON b.ft_no = c.ft_no
+WHERE
+    a.fs_wrt_year = #{fsWrtYear}
+    AND b.emp_no = #{empNo}
+ORDER BY fs_monthly ASC
+</select>
+
+<select id="revenueList2" parameterType="kr.or.oho.vo.RevenueVO" resultType="kr.or.oho.vo.RevenueVO">
+SELECT
+    a.frcs_no,
+    a.fs_amt,
+    a.fs_cost,
+    a.fs_earn,
+    a.fs_op,
+    a.fs_wrt_dt,
+    a.fs_mdfcn_dt,
+    a.fs_lbrco,
+    a.fs_ntsl_amt,
+    a.fs_mng_amt,
+    a.fs_wrt_year,
+    a.fs_monthly,
+    a.fs_wrt_qy,
+    a.fs_expense,
+    b.frcs_nm,
+    b.frcs_addr,
+    b.frcs_daddr, 
+    b.emp_no,
+    c.ft_nm
+FROM
+    frcs_sls a
+    JOIN franchise b ON a.frcs_no = b.frcs_no
+    JOIN frcs_type c ON b.ft_no = c.ft_no
+WHERE
+    a.fs_wrt_year = #{fsWrtYear}
+    AND a.frcs_no = #{frcsNo}
+ORDER BY fs_monthly ASC
+</select>
+
+<insert id="createRvn" parameterType="kr.or.oho.vo.RevenueVO">
+INSERT INTO frcs_sls (
+    frcs_no
+    , fs_amt
+    , fs_cost
+    , fs_earn
+    , fs_op
+    , fs_wrt_dt
+    , fs_mdfcn_dt
+    , fs_lbrco
+    , fs_ntsl_amt
+    , fs_mng_amt
+    , fs_wrt_year
+    , fs_monthly
+    , fs_wrt_qy
+    , fs_expense
+) VALUES (
+    'FRC040'
+  , #{fsAmt}
+  , #{fsCost}
+  , #{fsEarn}
+  , #{fsOp}
+  , #{fsWrtDt}
+  , SYSDATE
+  , #{fsLbrco}
+  , #{fsNtslAmt}
+  , #{fsMngAmt}
+  , #{fsWrtYear}
+  , #{fsMonthly}
+  , #{fsWrtQy}
+  , #{fsExpense}
+)
+</insert>
+
+<update id="updateRvn" parameterType="kr.or.oho.vo.RevenueVO">
+UPDATE frcs_sls
+SET
+    fs_amt = #{fsAmt}
+    , fs_cost = #{fsCost}
+    , fs_earn = #{fsEarn}
+    , fs_op = #{fsOp}
+    , fs_mdfcn_dt = SYSDATE 
+    , fs_lbrco = #{fsLbrco}
+    , fs_ntsl_amt = #{fsNtslAmt}
+    , fs_mng_amt = #{fsMngAmt}
+    , fs_expense = #{fsExpense}
+WHERE
+    	fs_monthly = #{fsMonthly}
+    and fs_wrt_year = #{fsWrtYear, jdbcType=VARCHAR}
+</update>
+
+<delete id="deleteRvn" parameterType="kr.or.oho.vo.RevenueVO">
+DELETE FROM frcs_sls
+WHERE
+        fs_wrt_year = #{fsWrtYear}
+    AND fs_monthly = #{fsMonthly}
+</delete>
+
+
+<select id="monthList" parameterType="map" resultType="kr.or.oho.vo.RevenueVO">
+SELECT
+    a.frcs_no,
+    a.fs_amt,
+    a.fs_cost,
+    a.fs_earn,
+    a.fs_op,
+    a.fs_lbrco,
+    a.fs_ntsl_amt,
+    a.fs_mng_amt,
+    a.fs_wrt_year,
+    a.fs_monthly,
+    a.fs_expense,
+    b.frcs_nm,
+    b.frcs_addr,
+    b.frcs_daddr, 
+    b.emp_no,
+    c.ft_nm
+FROM
+    frcs_sls a
+    JOIN franchise b ON a.frcs_no = b.frcs_no
+    JOIN frcs_type c ON b.ft_no = c.ft_no
+WHERE
+    	a.fs_wrt_year = #{fsWrtYear}
+    AND b.emp_no = #{empNo}
+ORDER BY fs_monthly ASC
+</select>
+
+
+<select id="yearList" parameterType="map" resultType="kr.or.oho.vo.RevenueVO">
+SELECT
+    a.fs_wrt_year,
+    b.frcs_nm,
+    SUM(a.fs_amt) AS total_fs_amt,
+    SUM(a.fs_cost) AS total_fs_cost,
+    SUM(a.fs_earn) AS total_fs_earn,
+    SUM(a.fs_op) AS total_fs_op,
+    SUM(a.fs_lbrco) AS total_fs_lbrco,
+    SUM(a.fs_ntsl_amt) AS total_fs_ntsl_amt,
+    SUM(a.fs_mng_amt) AS total_fs_mng_amt,
+    SUM(a.fs_expense) AS total_fs_expense
+FROM
+    frcs_sls a
+    JOIN franchise b ON a.frcs_no = b.frcs_no
+    JOIN frcs_type c ON b.ft_no = c.ft_no
+WHERE
+    b.emp_no = #{empNo}
+GROUP BY
+    a.fs_wrt_year, b.FRCS_NM
+ORDER BY
+    a.fs_wrt_year DESC
+</select>
+
+
+<select id="quaterList" parameterType="map" resultType="kr.or.oho.vo.RevenueVO">
+SELECT
+    a.FS_WRT_QY,
+    b.frcs_nm,
+    SUM(a.fs_amt) AS total_quater_fs_amt,
+    SUM(a.fs_cost) AS total_quater_fs_cost,
+    SUM(a.fs_earn) AS total_quater_fs_earn,
+    SUM(a.fs_op) AS total_quater_fs_op,
+    SUM(a.fs_lbrco) AS total_quater_fs_lbrco,
+    SUM(a.fs_ntsl_amt) AS total_quater_fs_ntsl_amt,
+    SUM(a.fs_mng_amt) AS total_quater_fs_mng_amt,
+    SUM(a.fs_expense) AS total_quater_fs_expense
+FROM
+    frcs_sls a
+    JOIN franchise b ON a.frcs_no = b.frcs_no
+    JOIN frcs_type c ON b.ft_no = c.ft_no
+WHERE
+        a.fs_wrt_year = #{fsWrtYear}
+    AND b.emp_no = #{empNo}   
+GROUP BY
+    a.FS_WRT_QY, b.FRCS_NM
+ORDER BY
+    a.FS_WRT_QY ASC
+</select>
+
+</mapper>

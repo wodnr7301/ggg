@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.PreFrcMapper">
+
+<resultMap type="kr.or.oho.vo.ReserveFounderVO" id="reserveFounderMap">
+	<result property="rfNo" column="RF_NO"/>
+	<result property="rfEmlAddr" column="RF_EML_ADDR"/>
+	<result property="rfNm" column="RF_NM"/>
+	<result property="rfZip" column="RF_ZIP"/>
+	<result property="rfAddr" column="RF_ADDR"/>
+	<result property="rfDaddr" column="RF_DADDR"/>
+	<result property="rfTelno" column="RF_TELNO"/>
+	<result property="rfYmd" column="RF_YMD"/>
+	<result property="rfHlo" column="RF_HLO"/>
+	<result property="ftNo" column="FT_NO"/>
+	<result property="comcdCdnm" column="COMCD_CDNM"/>
+	<association property="frcsTypeVO" resultMap="frcsTypeMap"></association>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.FrcsTypeVO" id="frcsTypeMap">
+	<result property="ftNo" column="FT_NO"/>
+	<result property="ftNm" column="FT_NM"/>
+</resultMap>
+
+<select id="list" resultMap="reserveFounderMap">
+	SELECT T.*
+	FROM (
+	    SELECT
+		    b.rf_no
+		  , b.rf_eml_addr
+		  , b.rf_nm
+		  , b.rf_zip
+		  , b.rf_addr
+		  , b.rf_daddr
+		  , b.rf_telno
+		  , b.rf_ymd
+		  , b.rf_hlo
+		  , b.ft_no
+		  , c.comcd_cdnm
+		  , a.ft_nm
+		FROM
+		    reserve_founder b
+		  , frcs_type       a
+		  , comcd           c
+		WHERE
+		        a.ft_no = b.ft_no
+		    AND c.comcd_groupcd = b.rf_hlo
+	    ORDER BY
+	        rf_ymd) T
+	LEFT JOIN ITV_BSC_INFO S
+	ON(T.rf_no = S.rf_no)
+	WHERE S.rf_no IS NULL
+</select>
+
+<select id="listCnt" resultType="int">
+	SELECT COUNT(*)
+	FROM (
+	    SELECT
+		    b.rf_no
+		FROM
+		    reserve_founder b
+		) T
+	LEFT JOIN ITV_BSC_INFO S
+	ON(T.rf_no = S.rf_no)
+	WHERE S.rf_no IS NULL
+</select>
+
+<select id="ibiNoSelect" resultType="String">
+	SELECT DISTINCT
+	    'IBI'||TRIM(TO_CHAR((SELECT NVL(MAX(TO_NUMBER(SUBSTR(IBI_NO,4))),0)+1 FROM ITV_BSC_INFO),'000'))
+	FROM
+	    DUAL
+</select>
+
+<insert id="ymdInsert" parameterType="kr.or.oho.vo.ItvBscInfoVO">
+	INSERT INTO itv_bsc_info (
+	    ibi_no
+	    , ibi_ymd
+	    , ibi_se_cd
+	    , rf_no
+	) VALUES (
+	    #{ibiNo}
+	  , #{ibiYmd}
+	  , 2
+	  , #{rfNo}
+	)
+</insert>
+
+<insert id="interviewerInsert" parameterType="kr.or.oho.vo.InterviewerVO">
+	INSERT INTO interviewer (
+	    itver_no
+	    , emp_no
+	    , ibi_no
+	) VALUES (
+	    ('IVR'||NVL(TRIM(TO_CHAR((SELECT MAX(TO_NUMBER(SUBSTR(itver_no,4)))+1 FROM interviewer),'000')), TRIM((TO_CHAR(1,'000')))))
+	  , #{empNo}
+	  , #{ibiNo}
+	)
+</insert>
+
+</mapper>

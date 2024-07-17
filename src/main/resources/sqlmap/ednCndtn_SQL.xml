@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.EdnCndtnMapper">
+
+<resultMap type="kr.or.oho.vo.EdnCndtnVO" id="ednCndtnMap">
+	<result property="ecNo" column="EC_NO"/>
+	<result property="epNo" column="EP_NO"/>
+	<result property="frcsNo" column="FRCS_NO"/>
+	<result property="ecYmd" column="EC_YMD"/>
+	<result property="ecYn" column="EC_YN"/>
+	<result property="ecBlank" column="EC_BLANK"/>
+	<association property="ednPrgrmVO" resultMap="ednPrgrmMap"></association>
+	<association property="franchiseVO" resultMap="franchiseMap"></association>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.EdnPrgrmVO" id="ednPrgrmMap">
+	<result property="epNo" column="EP_NO"/>
+	<result property="epNm" column="EP_NM"/>
+	<result property="epTm" column="EP_TM"/>
+	<result property="epEsntlYn" column="EP_ESNTL_YN"/>
+	<result property="epPlcNm" column="EP_PLC_NM"/>
+	<result property="epContent" column="EP_CONTENT"/>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.FranchiseVO" id="franchiseMap">
+	<result property="frcsNo" column="FRCS_NO"/>
+	<result property="frcsNm" column="FRCS_NM"/>
+	<result property="frcsAddr" column="FRCS_ADDR"/>
+	<result property="frcsDaddr" column="FRCS_DADDR"/>
+	<result property="frcsZip" column="FRCS_ZIP"/>
+	<result property="frcsTelno" column="FRCS_TELNO"/>
+	<result property="empNo" column="EMP_NO"/>
+	<result property="ftNo" column="FT_NO"/>
+	<result property="ftRgnNm" column="FT_RGN_NM"/>
+</resultMap>
+
+<select id="list" resultMap="ednCndtnMap">
+	SELECT
+	    c.ec_no
+	  , c.ep_no
+	  , c.frcs_no
+	  , c.ec_ymd
+	  , c.ec_yn
+	  , c.ec_blank
+	  , p.ep_nm
+	  , p.ep_tm
+	  , p.ep_esntl_yn
+	  , f.frcs_nm
+	  , f.emp_no
+	FROM
+	    edn_condition c
+	JOIN
+	    edn_prgrm p
+	ON
+	    c.ep_no = p.ep_no
+	JOIN
+	    franchise f
+	ON
+	    c.frcs_no = f.frcs_no
+	ORDER BY
+	    ec_ymd
+</select>
+
+<select id="getList" resultMap="ednCndtnMap" parameterType="kr.or.oho.vo.EdnPrgrmVO">
+	SELECT
+	    c.ec_no
+	  , c.ep_no
+	  , c.frcs_no
+	  , c.ec_ymd
+	  , c.ec_yn
+	  , c.ec_blank
+	  , p.ep_nm
+	  , p.ep_tm
+	  , p.ep_esntl_yn
+	  , f.frcs_nm
+	  , f.emp_no
+	FROM
+	    edn_condition c
+	JOIN
+	    v_edn_prgrm p
+	ON
+	    c.ep_no = p.ep_no
+	JOIN
+	    franchise f
+	ON
+	    c.frcs_no = f.frcs_no
+	WHERE
+		<if test="epNm1 != 'etc'">
+	    p.ep_nm1 = #{epNm1}
+	    </if>
+		<if test="epNm1 == 'etc'">
+    	p.ep_nm1 NOT IN ('24년도 신규가맹점 개인정보 보호 교육',
+                        '24년도 신규가맹점 산업 안전 보건 교육',
+                        '24년도 신규가맹점 성희롱 예방 교육',
+                        '24년도 신규가맹점 장애인 인식개선 교육',
+                        '24년도 신규가맹점 직장 내 괴롭힘 예방 교육')
+	    </if>
+	ORDER BY
+	    ec_ymd
+</select>
+
+<delete id="delete" parameterType="kr.or.oho.vo.EdnCndtnVO">
+	DELETE FROM edn_condition
+	WHERE
+	    ec_no = #{ecNo}
+</delete>
+
+<insert id="add" parameterType="kr.or.oho.vo.EdnCndtnVO">
+	<selectKey resultType="String" order="BEFORE" keyProperty="ecNo">
+		SELECT DISTINCT
+		    'EDC'||TRIM(TO_CHAR((SELECT NVL(MAX(TO_NUMBER(SUBSTR(EC_NO,4))),0)+1 FROM EDN_CONDITION),'000'))
+		FROM
+		    DUAL
+	</selectKey>
+	INSERT INTO edn_condition (
+	    ec_no
+	    , ep_no
+	    , frcs_no
+	    , ec_ymd
+	) VALUES (
+	    #{ecNo}
+	  , #{epNo}
+	  , #{frcsNo}
+	  , #{ecYmd}
+	)
+</insert>
+
+<update id="update" parameterType="kr.or.oho.vo.EdnCndtnVO">
+	UPDATE edn_condition
+	SET
+	    ec_ymd = #{ecYmd}
+	  , ec_yn = #{ecYn}
+	  , ec_blank = #{ecBlank}
+	WHERE
+	        ec_no = #{ecNo}
+</update>
+
+<!-- 폐업하지 않은 가맹점 중 해당 교육 받지 않은 가맹점 리스트 -->
+<select id="getTrnFrcList" parameterType="kr.or.oho.vo.EdnPrgrmVO" resultType="kr.or.oho.vo.FranchiseVO">
+	SELECT
+	    frcs_no
+	  , frcs_nm
+	  , frcs_addr
+	  , ft_rgn_nm
+	FROM
+	    franchise
+	WHERE
+	    frcs_no NOT IN (
+	        SELECT
+	            c.frcs_no
+	        FROM
+	            franchise     c
+	        LEFT JOIN
+	            edn_condition d
+	        ON
+	            c.frcs_no = d.frcs_no
+	        WHERE
+	            d.ep_no = #{epNo}
+	    )
+	AND frcs_clsbiz_yn = 'N'
+</select>
+
+<select id="epEcYCnt" resultType="kr.or.oho.vo.EdnPrgrmVO">
+	SELECT p.ep_no, NVL(T.cnt,0) epEcYCnt
+	FROM edn_prgrm p
+	LEFT JOIN (
+	    select c.ep_no, COUNT(c.ep_no) cnt
+	    from edn_condition c
+	    where c.ec_yn = 'Y'
+	    GROUP BY c.ep_no
+	)T
+	ON p.ep_no = T.ep_no
+</select>
+
+<select id="getEcYnfCnt" resultType="int" parameterType="hashMap">
+	SELECT
+	    COUNT(c.ec_no)
+	FROM
+	    edn_condition c
+	LEFT JOIN
+	    v_edn_prgrm p
+	ON
+	    c.ep_no = p.ep_no
+	WHERE
+	    1=1
+	AND c.ec_yn = #{ecYn}
+	<if test="epNm1 != null and epNm1 != ''">
+		<choose>
+			<when test="epNm1 == 'etc'">
+			AND p.ep_nm1 NOT IN ('24년도 신규가맹점 개인정보 보호 교육',
+		                       '24년도 신규가맹점 산업 안전 보건 교육',
+		                       '24년도 신규가맹점 성희롱 예방 교육',
+		                       '24년도 신규가맹점 장애인 인식개선 교육',
+		                       '24년도 신규가맹점 직장 내 괴롭힘 예방 교육')
+			</when>
+			<otherwise>
+			AND p.ep_nm1 = #{epNm1}
+			</otherwise>
+		</choose>
+	</if>
+</select>
+
+<select id="trnList" resultMap="ednCndtnMap" parameterType="String">
+	SELECT
+	    c.ec_no
+	  , c.ep_no
+	  , c.frcs_no
+	  , c.ec_ymd
+	  , c.ec_yn
+	  , c.ec_blank
+	  , ep_nm
+	  , ep_tm
+	  , ep_esntl_yn
+	  , ep_plc_nm
+	FROM
+	    edn_condition c
+	LEFT JOIN
+	    edn_prgrm p
+	ON
+	    c.ep_no = p.ep_no
+	WHERE
+	    c.frcs_no = (
+	        SELECT frcs_no FROM franchise WHERE emp_no = #{empNo}
+	    )
+	ORDER BY
+	    c.ec_ymd
+</select>
+
+<select id="myEcYnfCnt" parameterType="hashMap" resultType="int">
+	SELECT
+	    COUNT(ec_no)
+	FROM
+	    edn_condition
+	WHERE
+	    frcs_no = (
+	        SELECT frcs_no FROM franchise WHERE emp_no = #{empNo}
+	    )
+	AND ec_yn = #{ecYn}
+</select>
+
+<select id="getEcYnfCntFirst" parameterType="String" resultType="kr.or.oho.vo.EdnCndtnVO">
+	SELECT
+	    ynf.text as ecYn
+	  , COUNT(T.ec_no) ecYnfCnt
+	FROM (
+	    SELECT 'N' AS text FROM dual UNION ALL
+	    SELECT 'Y' AS text FROM dual UNION ALL
+	    SELECT 'F' AS text FROM dual
+	) ynf
+	LEFT JOIN (
+	    SELECT
+	        c.ec_no,
+	        c.ec_yn
+	    FROM
+	        edn_condition c
+	    LEFT JOIN
+	        v_edn_prgrm p
+	    ON
+	        c.ep_no = p.ep_no
+	    WHERE
+	        1=1
+		<choose>
+			<when test="epNm1 == 'etc'">
+			AND p.ep_nm1 NOT IN ('24년도 신규가맹점 개인정보 보호 교육',
+		                       '24년도 신규가맹점 산업 안전 보건 교육',
+		                       '24년도 신규가맹점 성희롱 예방 교육',
+		                       '24년도 신규가맹점 장애인 인식개선 교육',
+		                       '24년도 신규가맹점 직장 내 괴롭힘 예방 교육')
+			</when>
+			<otherwise>
+			AND p.ep_nm1 = #{epNm1}
+			</otherwise>
+		</choose>
+	) T
+	ON
+	    ynf.text = T.ec_yn
+	GROUP BY
+	    ynf.text
+	ORDER BY
+	    ynf.text desc
+</select>
+
+</mapper>

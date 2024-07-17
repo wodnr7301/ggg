@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.FrcEmpMapper">
+
+<select id="empNoSelect" resultType="String">
+	SELECT DISTINCT
+	    'EMP'||TRIM(TO_CHAR((SELECT NVL(MAX(TO_NUMBER(SUBSTR(EMP_NO,4))),0)+1 FROM EMPLOYEE),'000'))
+	FROM
+	    DUAL
+</select>
+
+<insert id="addFrcEmp" parameterType="kr.or.oho.vo.EmployeeVO">
+	INSERT INTO employee (
+	    emp_no
+	    , emp_nm
+	    , emp_brdt
+	    , emp_eml_addr
+	    , emp_zip
+	    , emp_addr
+	    , emp_daddr
+	    , emp_telno
+	    , emp_img
+	    , emp_id
+	    , emp_pswd
+	    , emp_gen
+	    , enabled
+	    , emp_clsf
+	) VALUES (
+	    #{empNo}
+	  , #{empNm}
+	  , #{empBrdt}
+	  , #{empEmlAddr}
+	  , #{empZip}
+	  , #{empAddr}
+	  , #{empDaddr}
+	  , #{empTelno}
+	  , #{empImg}
+	  , #{empId}
+	  , #{empPswd}
+	  , #{empGen}
+	  , '0'
+	  , 'A302'
+	)
+</insert>
+
+
+
+</mapper>

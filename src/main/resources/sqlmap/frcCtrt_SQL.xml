@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.CtrtMapper">
+
+<resultMap type="kr.or.oho.vo.CtrtVO" id="ctrtMap">
+	<result property="ctrtNo" column="CTRT_NO"/>
+	<result property="frcsNo" column="FRCS_NO"/>
+	<result property="empNo" column="EMP_NO"/>
+	<result property="ctrtNm" column="CTRT_NM"/>
+	<result property="ctrtCn" column="CTRT_CN"/>
+	<result property="ctrtYmd" column="CTRT_YMD"/>
+	<result property="rfNo" column="RF_NO"/>
+	<result property="empNm" column="EMP_NM"/>
+	<result property="frcEmpNo" column="FRC_EMP_NO"/>
+	<result property="frcEmpNm" column="FRC_EMP_NM"/>
+	<result property="rfNm" column="RF_NM"/>
+	<result property="frcsClsbizYn" column="FRCS_CLSBIZ_YN"/>
+	<association property="attachVO" resultMap="attachMap"></association>
+	<association property="frcsTypeVO" resultMap="frcsTypeMap"></association>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.AttachVO" id="attachMap">
+	<result property="afGlocd" column="AF_GLOCD"/>
+	<result property="afSeq" column="AF_SEQ"/>
+	<result property="afNm" column="AF_NM"/>
+	<result property="afSz" column="AF_SZ"/>
+	<result property="afExtnNm" column="AF_EXTN_NM"/>
+	<result property="afPstdt" column="AF_PSTDT"/>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.FrcsTypeVO" id="frcsTypeMap">
+	<result property="ftNo" column="FT_NO"/>
+	<result property="ftNm" column="FT_NM"/>
+</resultMap>
+
+<select id="list" resultMap="ctrtMap" parameterType="kr.or.oho.vo.FrcsTypeVO">
+	SELECT
+	    b.ctrt_no
+	  , b.frcs_no
+	  , b.emp_no	<!-- 계약담당자 -->
+	  , b.ctrt_nm
+	  , b.ctrt_ymd
+	  , a.emp_nm	<!-- 계약담당자 이름 -->
+	  , c.af_glocd
+	  , c.af_nm
+	  , d.emp_no as frc_emp_no	<!-- 가맹점주 -->
+	  , d.frcs_clsbiz_yn
+	  , e.emp_nm as frc_emp_nm	<!-- 가맹점주 이름 -->
+	  , (SELECT f.ft_nm FROM frcs_type f WHERE f.ft_no = d.ft_no) ft_nm
+	FROM
+	    ctrt    b
+	LEFT JOIN
+	    atch_file c ON b.ctrt_no = c.af_glocd
+	LEFT JOIN
+	    employee a ON b.emp_no = a.emp_no
+	LEFT JOIN
+	    franchise d ON b.frcs_no = d.frcs_no
+	LEFT JOIN
+	    employee e ON d.emp_no = e.emp_no
+	WHERE
+		1 = 1
+	<if test="ftNo != null and ftNo != ''">
+    	AND d.ft_no = #{ftNo}
+    </if>
+	ORDER BY CTRT_NO DESC
+</select>
+
+<select id="detail" resultMap="ctrtMap" parameterType="kr.or.oho.vo.CtrtVO">
+	SELECT
+	    b.ctrt_no
+	  , b.frcs_no
+	  , b.emp_no	<!-- 계약담당자 -->
+	  , b.ctrt_nm
+	  , b.ctrt_cn
+	  , b.ctrt_ymd
+	  , a.emp_nm	<!-- 계약담당자 이름 -->
+	  , c.af_glocd
+	  , c.af_seq
+	  , c.af_nm
+	  , c.af_sz
+	  , c.af_extn_nm
+	  , c.af_pstdt
+	  , d.emp_no as frc_emp_no	<!-- 가맹점주 -->
+	  ,(select f.ft_nm from frcs_type f where f.ft_no = d.ft_no) as ft_nm
+	  , e.emp_nm as frc_emp_nm	<!-- 가맹점주 이름 -->
+	FROM
+	    ctrt    b
+	LEFT JOIN
+	    atch_file c ON b.ctrt_no = c.af_glocd
+	LEFT JOIN
+	    employee a ON b.emp_no = a.emp_no
+	LEFT JOIN
+	    franchise d ON b.frcs_no = d.frcs_no
+	LEFT JOIN
+	    employee e ON d.emp_no = e.emp_no
+	WHERE
+	    b.ctrt_no = #{ctrtNo}
+</select>
+
+<select id="ctrtNoSelect" resultType="String">
+	SELECT DISTINCT
+		'CTR'||TRIM(TO_CHAR((SELECT NVL(MAX(TO_NUMBER(SUBSTR(CTRT_NO,4))),0)+1 FROM CTRT),'000'))
+	FROM
+		DUAL
+</select>
+
+<insert id="add" parameterType="kr.or.oho.vo.CtrtVO">
+	INSERT INTO ctrt (
+	    ctrt_no
+	    , frcs_no
+	    , emp_no
+	    , ctrt_nm
+	    , ctrt_cn
+	    , ctrt_ymd
+	    , rf_no
+	) VALUES (
+	    #{ctrtNo}
+	  , #{frcsNo}
+	  , #{empNo}	<!-- 사원번호(계약담당직원) -->
+	  , #{ctrtNm}
+	  , #{ctrtCn}
+	  , #{ctrtYmd}
+	  , #{rfNo}		<!-- 예비창업자지원번호(가맹점주) -->
+	)
+</insert>
+
+<select id="frcsTypeSelect" resultType="kr.or.oho.vo.FrcsTypeVO">
+	SELECT
+	    ft_no
+	  , ft_nm
+	FROM
+	    frcs_type
+</select>
+
+<update id="update" parameterType="kr.or.oho.vo.CtrtVO">
+	UPDATE ctrt
+	SET
+<!-- 	    ctrt_nm = #{ctrtNm} -->
+	    ctrt_cn = #{ctrtCn}
+	  , ctrt_ymd = #{ctrtYmd}
+	WHERE
+	    ctrt_no = #{ctrtNo}
+</update>
+
+<select id="goodFrc" resultType="String">
+	SELECT a.frcs_no FROM (
+	SELECT
+	    frcs_no
+	  , AVG(fs_amt) avgg
+	  , PERCENT_RANK() OVER (ORDER BY AVG(fs_amt) DESC) rankk
+	FROM
+	    frcs_sls
+	WHERE
+	    fs_wrt_year = TO_CHAR(SYSDATE, 'YYYY')-1
+	AND frcs_no IN (
+	        SELECT frcs_no
+	        FROM frcs_sls
+	        WHERE fs_wrt_year = TO_CHAR(SYSDATE, 'YYYY')-1
+	        GROUP BY frcs_no
+	        HAVING COUNT(DISTINCT fs_monthly) = 12
+	    )
+	GROUP BY
+	    frcs_no
+	) a
+	WHERE a.rankk <![CDATA[<=]]> 0.1
+</select>
+
+<select id="getFtCnt" resultType="kr.or.oho.vo.FrcsTypeVO">
+	SELECT
+	    f.ft_no
+	  , (SELECT a.ft_nm FROM frcs_type a WHERE a.ft_no = f.ft_no) ftNm
+	  , COUNT(f.ft_no) ftCnt
+	FROM
+	    ctrt c
+	LEFT JOIN
+	    franchise f
+	ON c.frcs_no = f.frcs_no
+	GROUP BY
+	    rollup(f.ft_no)
+	ORDER BY f.ft_no nulls first
+</select>
+
+<select id="getClsYnCnt" resultType="int" parameterType="hashMap">
+	SELECT
+	    COUNT(b.ctrt_no)
+	FROM
+	    ctrt    b
+	LEFT JOIN
+	    franchise d ON b.frcs_no = d.frcs_no
+	WHERE
+	    1 = 1
+	<if test="ftNo != null and ftNo != ''">
+    	AND d.ft_no = #{ftNo}
+    </if>
+	AND FRCS_CLSBIZ_YN = #{frcsClsYn}
+</select>
+
+</mapper>

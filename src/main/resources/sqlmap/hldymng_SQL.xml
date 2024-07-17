@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.oho.mapper.HldyMngMapper">
+
+<resultMap type="kr.or.oho.vo.HldyMngLdgrVO" id="hldyManageMap">
+	<result property="hmlNo" column="HML_NO"/>
+	<result property="empNo" column="EMP_NO"/>
+	<result property="hsNo" column="HS_NO"/>
+	<result property="hmlUseDt" column="HML_USE_DT"/>
+	<result property="hmlEndDt" column="HML_END_DT"/>
+	<result property="hmlTd" column="HML_TD"/>
+	<result property="hmlRsn" column="HML_RSN"/>
+	<result property="eatrztNo" column="EATRZT_NO"/>
+	<result property="atrzlnNo" column="ATRZLN_NO"/>
+	<result property="tmpltCn" column="TMPLT_CN"/>
+	<result property="tmpltNo" column="TMPLT_NO"/>
+	<association property="hldySeVO" resultMap="hldySeMap"></association>
+	<association property="eatrztVO" resultMap="eatrztMap"></association>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.EatrztVO" id="eatrztMap">
+	<result property="eatrztPrcsYn" column="EATRZT_PRCS_YN"/>
+</resultMap>
+
+<resultMap type="kr.or.oho.vo.HldySeVO" id="hldySeMap">
+	<result property="hsNo" column="HS_NO"/>
+	<result property="hsNm" column="HS_NM"/>
+</resultMap>
+
+<select id="list" resultMap="hldyManageMap" parameterType="String">
+	SELECT
+	    c.eatrzt_no
+	  , d.atrzln_no
+	  , f.hml_rsn
+	  , e.hs_nm
+	  , e.hs_no
+	  , c.eatrzt_prcs_yn
+      , t.tmplt_cn
+      , t.tmplt_no
+	FROM
+	    atrzln        d
+	  , eatrzt        c
+      , tmplt         t
+	  , hldy_mng_ldgr f
+	  , hldy_se       e
+	WHERE
+	        c.eatrzt_no = d.eatrzt_no
+	    AND e.hs_no = f.hs_no
+	    AND c.eatrzt_no=f.eatrzt_no
+        AND c.tmplt_no=t.tmplt_no
+	    AND c.emp_no = #{empNo}
+	    AND c.eatrzt_prcs_yn = 'Y'
+	    AND e.hs_no != '2'
+	    AND d.atrzln_pro = 0
+	ORDER BY
+    	c.eatrzt_no DESC
+</select>
+
+<select id="btList" resultMap="hldyManageMap" parameterType="String">
+	SELECT
+	    c.eatrzt_no
+	  , d.atrzln_no
+	  , f.hml_rsn
+	  , e.hs_nm
+	  , c.eatrzt_prcs_yn
+	FROM
+	    atrzln        d
+	  , eatrzt        c
+	  , hldy_mng_ldgr f
+	  , hldy_se       e
+	WHERE
+	        c.eatrzt_no = d.eatrzt_no
+	    AND e.hs_no = f.hs_no
+	    AND c.eatrzt_no=f.eatrzt_no
+	    AND c.emp_no = #{empNo}
+	    AND c.eatrzt_prcs_yn = 'Y'
+	    AND e.hs_no = '2'
+	    AND d.atrzln_pro = 0
+	ORDER BY
+    	c.eatrzt_no DESC
+</select>
+
+</mapper>
